@@ -78,7 +78,8 @@ func (stack ErrStack) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		fmtStr := ""
-		for k, err := range stack {
+		for k := len(stack) - 1; k >= 0; k-- {
+			err := stack[k]
 			msg, ok := Codes[err.code]
 			if !ok {
 				msg = Codes[ErrUnspecified]
@@ -95,7 +96,7 @@ func (stack ErrStack) Format(s fmt.State, verb rune) {
 
 			default:
 				// Condensed stack trace
-				fmtStr = "(%d) %s:%d %s - %d:%s  '%s' Status %d\n"
+				fmtStr = "(%d) %s:%d %s - %d:%s '%s' Status %d\n"
 			}
 
 			fmt.Fprintf(s, "%s", fmt.Sprintf(
