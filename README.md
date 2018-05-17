@@ -1,6 +1,39 @@
 # go-errors
 
-Go errors is inspired by `pkg/errors` and uses a similar API. It implements the Formatter interface to provide a stack trace with the `%v` verb. `%+v` formats a more detailed trace.
+Go errors is inspired by `pkg/errors` and uses a similar API:
+
+## Define a new error with an error code
+
+Creating a new error defines the root of a backtrace.
+```go
+_, err := ioutil.ReadAll(r)
+if err != nil {
+    return errs.New("read failed", errs.ErrUnknown)
+}
+```
+
+
+## Adding context to an error
+
+The errors.Wrap function returns a new error that adds context to the original error and adds to the error stack trace:
+```go
+_, err := ioutil.ReadAll(r)
+if err != nil {
+    return errs.Wrap(err, "read failed", errs.ErrUnknown)
+}
+```
+
+In this case, if the original `err` is not an instance of `Stack`, that error becomes the root of the error stack.
+
+## Root cause of an error stack
+
+Retrieving the root cause of an error stack is straightforward:
+```go
+log.Println(err.(errs.Stack).Cause())
+```
+
+
+ It implements the Formatter interface to provide a stack trace with the `%v` verb. `%+v` formats a more detailed trace.
 
 `%s`:
 ```

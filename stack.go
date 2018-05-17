@@ -8,15 +8,15 @@ import (
 )
 
 /*
-ErrStack defines an error heap
+Stack defines an error heap
 */
-type ErrStack []Msg
+type Stack []Msg
 
 /*
 New returns an error with caller information for debugging.
 */
-func New(msg string, code Code) ErrStack {
-	return ErrStack{Msg{
+func New(msg string, code Code) Stack {
+	return Stack{Msg{
 		err:    errors.New(msg),
 		caller: getCaller(),
 		code:   code,
@@ -27,7 +27,7 @@ func New(msg string, code Code) ErrStack {
 /*
 Callers returns an array of callers
 */
-func (stack ErrStack) Callers() []Caller {
+func (stack Stack) Callers() []Caller {
 	callers := []Caller{}
 	for _, msg := range stack {
 		if msg.caller.Ok {
@@ -40,7 +40,7 @@ func (stack ErrStack) Callers() []Caller {
 /*
 Cause returns cause of an error stack.
 */
-func (stack ErrStack) Cause() Msg {
+func (stack Stack) Cause() Msg {
 	if len(stack) > 0 {
 		return stack[0]
 	}
@@ -50,7 +50,7 @@ func (stack ErrStack) Cause() Msg {
 /*
 Code returns the most recent error code
 */
-func (stack ErrStack) Code() Code {
+func (stack Stack) Code() Code {
 	code := ErrUnspecified
 	if len(stack) > 0 {
 		code = stack[len(stack)-1].code
@@ -61,7 +61,7 @@ func (stack ErrStack) Code() Code {
 /*
 Error implements the error interface
 */
-func (stack ErrStack) Error() string {
+func (stack Stack) Error() string {
 	meta, ok := Codes[stack.Code()]
 	if !ok {
 		meta = Codes[ErrUnspecified]
@@ -74,7 +74,7 @@ Format implements fmt.Formatter.
 
 Format formats the stack trace output.
 */
-func (stack ErrStack) Format(s fmt.State, verb rune) {
+func (stack Stack) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		fmtStr := ""
@@ -120,8 +120,8 @@ func (stack ErrStack) Format(s fmt.State, verb rune) {
 /*
 With adds a new error to the stack
 */
-func (stack ErrStack) With(err error) ErrStack {
-	if msg, ok := err.(ErrStack); ok {
+func (stack Stack) With(err error) Stack {
+	if msg, ok := err.(Stack); ok {
 		stack = append(stack, msg...)
 	} else if msg, ok := err.(Msg); ok {
 		stack = append(stack, msg)
@@ -137,16 +137,16 @@ func (stack ErrStack) With(err error) ErrStack {
 }
 
 /*
-Wrap wraps an error in an ErrStack.
+Wrap wraps an error in an Stack.
 */
-func Wrap(err error, msg string, code Code) ErrStack {
+func Wrap(err error, msg string, code Code) Stack {
 	// Can't wrap a nil...
 	if nil == err {
 		return nil
 	}
-	var stack ErrStack
+	var stack Stack
 	var ok bool
-	if stack, ok = err.(ErrStack); ok {
+	if stack, ok = err.(Stack); ok {
 		stack = stack.With(Msg{
 			err:    err,
 			caller: getCaller(),
@@ -154,7 +154,7 @@ func Wrap(err error, msg string, code Code) ErrStack {
 			msg:    msg,
 		})
 	} else {
-		stack = ErrStack{Msg{
+		stack = Stack{Msg{
 			err:    err,
 			caller: getCaller(),
 			code:   code,
