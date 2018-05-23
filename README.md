@@ -2,6 +2,37 @@
 
 Go errors is inspired by `pkg/errors` and uses a similar API:
 
+```go
+import errs "github.com/mkenney/go-errors"
+```
+
+## Define error codes
+
+See [`codes.go`](https://github.com/mkenney/go-errors/blob/master/codes.go)
+
+```go
+const (
+    // Error codes below 1000 are reserved for future use.
+	UserError errs.Code = iota + 1000
+	InternalError
+)
+func init() {
+	errs.Codes[UserError] = errs.Metadata{
+        "A user error occurred",
+        "bad user input",
+        400,
+    }
+	errs.Codes[InternalError] = errs.Metadata{
+        "An internal server occurred",
+        "A service error occurred",
+        500,
+    }
+}
+func SomeFunc() error {
+    return errs.New("Some internal thing broke", InternalError)
+}
+```
+
 ## Define a new error with an error code
 
 Creating a new error defines the root of a backtrace.

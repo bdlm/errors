@@ -9,8 +9,11 @@ type Code int
 Metadata contains metadata that can be associated with an error code.
 */
 type Metadata struct {
-	Ext        string
-	Int        string
+	// External (user) facing error text.
+	Ext string
+	// Internal only (logs) error text.
+	Int string
+	// HTTP status that should be used for the associated error code.
 	HTTPStatus int
 }
 
