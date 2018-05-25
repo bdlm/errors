@@ -6,30 +6,40 @@ Go errors is inspired by `pkg/errors` and uses a similar API:
 import errs "github.com/mkenney/go-errors"
 ```
 
+## Error stacks
+
+### Create a new stack
+
+```go
+if !someValidationCall() {
+    return errs.New("validation failed")
+}
+```
+
 ## Define error codes
 
 See [`codes.go`](https://github.com/mkenney/go-errors/blob/master/codes.go)
 
 ```go
 const (
-    // Error codes below 1000 are reserved for future use.
+	// Error codes below 1000 are reserved for future use.
 	UserError errs.Code = iota + 1000
 	InternalError
 )
 func init() {
 	errs.Codes[UserError] = errs.Metadata{
-        "A user error occurred",
-        "bad user input",
-        400,
-    }
+		"A user error occurred",
+		"bad user input",
+		400,
+	}
 	errs.Codes[InternalError] = errs.Metadata{
-        "An internal server occurred",
-        "A service error occurred",
-        500,
-    }
+		"An internal server occurred",
+		"A service error occurred",
+		500,
+	}
 }
 func SomeFunc() error {
-    return errs.New("Some internal thing broke", InternalError)
+	return errs.New("Some internal thing broke", InternalError)
 }
 ```
 
@@ -39,7 +49,7 @@ Creating a new error defines the root of a backtrace.
 ```go
 _, err := ioutil.ReadAll(r)
 if err != nil {
-    return errs.New("read failed", errs.ErrUnknown)
+	return errs.New("read failed", errs.ErrUnknown)
 }
 ```
 
@@ -50,7 +60,7 @@ The errors.Wrap function returns a new error that adds context to the original e
 ```go
 _, err := ioutil.ReadAll(r)
 if err != nil {
-    return errs.Wrap(err, "read failed", errs.ErrUnknown)
+	return errs.Wrap(err, "read failed", errs.ErrUnknown)
 }
 ```
 
@@ -81,18 +91,18 @@ An unknown error occurred
 `%+v`:
 ```
 (2) err_test.go:14 github.com/mkenney/go-errors_test.TestConstructor
-        Code: 1
-        Mesg: test message 3
-        Text: An unknown error occurred
-        Http: 500
+	Code: 1
+	Mesg: test message 3
+	Text: An unknown error occurred
+	Http: 500
 (1) err_test.go:13 github.com/mkenney/go-errors_test.TestConstructor
-        Code: 1
-        Mesg: test message 2
-        Text: An unknown error occurred
-        Http: 500
+	Code: 1
+	Mesg: test message 2
+	Text: An unknown error occurred
+	Http: 500
 (0) err_test.go:11 github.com/mkenney/go-errors_test.TestConstructor
-        Code: 0
-        Mesg: test message 1
-        Text: Error code unspecified
-        Http: 500
+	Code: 0
+	Mesg: test message 1
+	Text: Error code unspecified
+	Http: 500
 ```

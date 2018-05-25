@@ -5,31 +5,38 @@ import (
 	"fmt"
 	"path"
 	"runtime"
+	"text/tabwriter"
 )
 
 /*
-Stack defines an error heap
+Err defines an error heap
 */
-type Stack []Msg
+type Err []Msg
 
 /*
-New returns an error with caller information for debugging.
+New returns an error with caller information for debugging. `code` is
+optional. Although you can pass multiple codes, only the first is
+accepted.
 */
-func New(msg string, code Code) Stack {
-	return Stack{Msg{
+func New(msg string, code ...Code) Err {
+	var errCode Code
+	if len(code) > 0 {
+		errCode = code[0]
+	}
+	return Err{Msg{
 		err:    errors.New(msg),
 		caller: getCaller(),
-		code:   code,
+		code:   errCode,
 		msg:    msg,
 	}}
 }
 
 /*
-Callers returns an array of callers
+Callers returns the caller stack.
 */
-func (stack Stack) Callers() []Caller {
+func (errs Err) Callers() []Caller {
 	callers := []Caller{}
-	for _, msg := range stack {
+	for _, msg := range errs {
 		if msg.caller.Ok {
 			callers = append(callers, msg.caller)
 		}
@@ -38,128 +45,165 @@ func (stack Stack) Callers() []Caller {
 }
 
 /*
-Cause returns cause of an error stack.
+Cause returns the root cause of an error stack.
 */
-func (stack Stack) Cause() Msg {
-	if len(stack) > 0 {
-		return stack[0]
+func (errs Err) Cause() Msg {
+	if len(errs) > 0 {
+		return errs[0]
 	}
 	return Msg{}
 }
 
 /*
-Code returns the most recent error code
+Code returns the most recent error code.
 */
-func (stack Stack) Code() Code {
+func (errs Err) Code() Code {
 	code := ErrUnspecified
-	if len(stack) > 0 {
-		code = stack[len(stack)-1].code
+	if len(errs) > 0 {
+		code = errs[len(errs)-1].code
 	}
 	return code
 }
 
 /*
-Error implements the error interface
+Error implements the error interface.
 */
-func (stack Stack) Error() string {
-	meta, ok := Codes[stack.Code()]
+func (errs Err) Error() string {
+	meta, ok := Codes[errs.Code()]
 	if !ok {
 		meta = Codes[ErrUnspecified]
 	}
-	return meta.Ext
+	return meta.External
 }
 
 /*
 Format implements fmt.Formatter.
 
-Format formats the stack trace output.
+https://golang.org/pkg/fmt/#hdr-Printing
+
+Format formats the stack trace output. Several verbs are supported:
+	%s  - Returns the user-safe error string mapped to the error code or
+		  "Internal Server Error" if none is specified.
+
+	%v  - Returns the full stack trace in a single line, useful for
+	      logging. Same as %#v with the newlines escaped.
+
+	%#v - Returns a multi-line stack trace, one column-delimited line
+		  per error.
+
+	%+v - Returns a multi-line detailed stack trace with multiple lines
+	      per error. Only useful for human consumption.
 */
-func (stack Stack) Format(s fmt.State, verb rune) {
+func (errs Err) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
-		fmtStr := ""
-		for k := len(stack) - 1; k >= 0; k-- {
-			err := stack[k]
+		stackPos := 0
+		for k := len(errs) - 1; k >= 0; k-- {
+			err := errs[k]
 			msg, ok := Codes[err.code]
 			if !ok {
 				msg = Codes[ErrUnspecified]
 			}
 			switch {
 			case s.Flag('+'):
-				// Detailed stack trace
-				fmtStr = `(%d) %s:%d %s
-	Code: %d
-	Mesg: %s
-	Text: %s
-	Http: %d
-`
+				w := tabwriter.NewWriter(s, 0, 0, 4, ' ', 0)
+				fmt.Fprintf(w, "%2d: %s\n", stackPos, runtime.FuncForPC(err.caller.Pc).Name())
+				fmt.Fprintf(w, "\t\tline: %s: %d\n", path.Base(err.caller.File), err.caller.Line)
+				fmt.Fprintf(w, "\t\tcode: %d: %s\n", err.code, msg.Internal)
+				fmt.Fprintf(w, "\t\tmesg: %s\n\n", err.msg)
+				w.Flush()
+
+			case s.Flag('#'):
+				// Condensed stack trace
+				w := tabwriter.NewWriter(s, 5, 1, 4, ' ', 0)
+				fmt.Fprintf(w, "%2d - %s:%d\t%s\t%d:%s\t%s\t\n",
+					stackPos,
+					path.Base(err.caller.File),
+					err.caller.Line,
+					runtime.FuncForPC(err.caller.Pc).Name(),
+					err.code,
+					msg.Internal,
+					err.msg,
+				)
+				w.Flush()
 
 			default:
 				// Condensed stack trace
-				fmtStr = "(%d) %s:%d %s - %d:%s '%s' Status %d\n"
-			}
+				w := tabwriter.NewWriter(s, 5, 1, 4, ' ', 0)
+				str := fmt.Sprintf(
+					"%2d - %s:%d\t%s\t%d:%s\t%s\t",
+					stackPos,
+					path.Base(err.caller.File),
+					err.caller.Line,
+					runtime.FuncForPC(err.caller.Pc).Name(),
+					err.code,
+					msg.Internal,
+					err.msg,
+				)
 
-			fmt.Fprintf(s, "%s", fmt.Sprintf(
-				fmtStr,
-				k,
-				path.Base(err.caller.File),
-				err.caller.Line,
-				runtime.FuncForPC(err.caller.Pc).Name(),
-				err.code,
-				err.msg,
-				msg.Int,
-				msg.HTTPStatus,
-			))
+				// Condensed stack trace
+				if s.Flag('#') {
+					str += "\n"
+
+					// Inline stack trace
+				} else {
+					str += "\\n"
+				}
+
+				fmt.Fprint(w, str)
+				w.Flush()
+			}
+			stackPos++
 		}
-	case 's':
+	default:
 		// Simple error messages
-		fmt.Fprintf(s, "%s", stack.Error())
+		fmt.Fprintf(s, "%s", errs.Error())
 	}
 }
 
 /*
 With adds a new error to the stack
 */
-func (stack Stack) With(err error) Stack {
-	if msg, ok := err.(Stack); ok {
-		stack = append(stack, msg...)
+func (errs Err) With(err error) Err {
+	if msg, ok := err.(Err); ok {
+		errs = append(errs, msg...)
 	} else if msg, ok := err.(Msg); ok {
-		stack = append(stack, msg)
+		errs = append(errs, msg)
 	} else {
-		stack = append(stack, Msg{
+		errs = append(errs, Msg{
 			err:    err,
 			caller: getCaller(),
 			code:   0,
 			msg:    "",
 		})
 	}
-	return stack
+	return errs
 }
 
 /*
-Wrap wraps an error in an Stack.
+Wrap wraps an error into the stack.
 */
-func Wrap(err error, msg string, code Code) Stack {
+func Wrap(err error, msg string, code Code) Err {
 	// Can't wrap a nil...
 	if nil == err {
 		return nil
 	}
-	var stack Stack
+	var errs Err
 	var ok bool
-	if stack, ok = err.(Stack); ok {
-		stack = stack.With(Msg{
+	if errs, ok = err.(Err); ok {
+		errs = errs.With(Msg{
 			err:    err,
 			caller: getCaller(),
 			code:   code,
 			msg:    msg,
 		})
 	} else {
-		stack = Stack{Msg{
+		errs = Err{Msg{
 			err:    err,
 			caller: getCaller(),
 			code:   code,
 			msg:    msg,
 		}}
 	}
-	return stack
+	return errs
 }
