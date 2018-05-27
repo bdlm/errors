@@ -10,9 +10,9 @@ Metadata contains metadata that can be associated with an error code.
 */
 type Metadata struct {
 	// External (user) facing error text.
-	Ext string
+	External string
 	// Internal only (logs) error text.
-	Int string
+	Internal string
 	// HTTP status that should be used for the associated error code.
 	HTTPStatus int
 }
@@ -23,8 +23,8 @@ Codes contains a map of error codes to metadata
 var Codes = map[Code]Metadata{}
 
 func init() {
-	Codes[ErrUnspecified] = Metadata{"An unknown error occurred", "Error code unspecified", 500}
-	Codes[ErrUnknown] = Metadata{"An unknown error occurred", "An unknown error occurred", 500}
+	Codes[ErrUnspecified] = Metadata{"Internal Server Error", "Error code unspecified", 500}
+	Codes[ErrUnknown] = Metadata{"Internal Server Error", "An unknown error occurred", 500}
 }
 
 const (
