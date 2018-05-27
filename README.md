@@ -8,12 +8,21 @@ import errs "github.com/mkenney/go-errors"
 
 ## Error stacks
 
+An error stack is an array of errors.
+
 ### Create a new stack
 
 ```go
 if !someValidationCall() {
-    return errs.New("validation failed")
+    err := errs.New("validation failed")
 }
+```
+
+### Base a new stack off any error
+
+```go
+err := someValidationCall()
+err := errs.Wrap("validation failed")
 ```
 
 ## Define error codes
@@ -76,33 +85,37 @@ log.Println(err.(errs.Stack).Cause())
 
  It implements the Formatter interface to provide a stack trace with the `%v` verb. `%+v` formats a more detailed trace.
 
-`%s`:
+Standard error output `%s`:
 ```
-An unknown error occurred
-```
-
-`%v`:
-```
-(2) err_test.go:14 github.com/mkenney/go-errors_test.TestConstructor - 1:test message 3 'An unknown error occurred' Status 500
-(1) err_test.go:13 github.com/mkenney/go-errors_test.TestConstructor - 1:test message 2 'An unknown error occurred' Status 500
-(0) err_test.go:11 github.com/mkenney/go-errors_test.TestConstructor - 0:test message 1 'Error code unspecified' Status 500
+Internal Server Error
 ```
 
-`%+v`:
+Single-line stack trace `%v`:
 ```
-(2) err_test.go:14 github.com/mkenney/go-errors_test.TestConstructor
-	Code: 1
-	Mesg: test message 3
-	Text: An unknown error occurred
-	Http: 500
-(1) err_test.go:13 github.com/mkenney/go-errors_test.TestConstructor
-	Code: 1
-	Mesg: test message 2
-	Text: An unknown error occurred
-	Http: 500
-(0) err_test.go:11 github.com/mkenney/go-errors_test.TestConstructor
-	Code: 0
-	Mesg: test message 1
-	Text: Error code unspecified
-	Http: 500
+0 - err_test.go:38    github.com/mkenney/go-errors_test.TestOutput    1:An unknown error occurred    could not read configuration    \n 1 - err_test.go:37    github.com/mkenney/go-errors_test.TestOutput    0:Error code unspecified    failed to read data stream    \n 2 - err_test.go:36    github.com/mkenney/go-errors_test.TestOutput    0:Error code unspecified    read: end of input    \n
+```
+
+Multi-line condensed stack trace `%#v`:
+```
+0 - err_test.go:38    github.com/mkenney/go-errors_test.TestOutput    1:An unknown error occurred    could not read configuration
+1 - err_test.go:37    github.com/mkenney/go-errors_test.TestOutput    0:Error code unspecified    failed to read data stream
+2 - err_test.go:36    github.com/mkenney/go-errors_test.TestOutput    0:Error code unspecified    read: end of input
+```
+
+Multi-line detailed stack trace `%+v`:
+```
+0: github.com/mkenney/go-errors_test.TestOutput
+        line: err_test.go: 38
+        code: 1: An unknown error occurred
+        mesg: could not read configuration
+
+1: github.com/mkenney/go-errors_test.TestOutput
+        line: err_test.go: 37
+        code: 0: Error code unspecified
+        mesg: failed to read data stream
+
+2: github.com/mkenney/go-errors_test.TestOutput
+        line: err_test.go: 36
+        code: 0: Error code unspecified
+        mesg: read: end of input
 ```
