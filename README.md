@@ -27,7 +27,7 @@ err := errs.Wrap("validation failed")
 
 ## Define error codes
 
-See [`codes.go`](https://github.com/mkenney/go-errors/blob/master/codes.go)
+Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/mkenney/go-errors/blob/master/codes.go)
 
 ```go
 const (
@@ -61,7 +61,6 @@ if err != nil {
 	return errs.New("read failed", errs.ErrUnknown)
 }
 ```
-
 
 ## Adding context to an error
 
