@@ -24,7 +24,7 @@ if !decodeSomeJSON() {
 
 ```go
 err := decodeSomeJSON()
-err = errs.Wrap("could not read configuration")
+err = errs.Wrap(err, "could not read configuration")
 ```
 
 ## Define error codes
