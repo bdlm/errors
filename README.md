@@ -127,7 +127,7 @@ log.Println(err.(errs.Stack).Cause())
 
 The Formatter interface has been implemented to provide access to a stack trace with the `%v` verb.
 
-Standard error output, use with error codes to ensure appropriate user-facing messages: `%s`:
+Standard error output, use with error codes to ensure appropriate user-facing messages `%s`:
 ```
 0002: Internal Server Error
 ```
