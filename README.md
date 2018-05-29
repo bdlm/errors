@@ -73,7 +73,7 @@ if err != nil {
 
 ## Adding context to an error
 
-The errors.Wrap function returns a new error that adds context to the original error and adds to the error stack trace:
+The errors.Wrap function returns a new error that adds context to the original error and starts an error stack:
 ```go
 _, err := ioutil.ReadAll(r)
 if err != nil {
@@ -85,7 +85,36 @@ In this case, if the original `err` is not an instance of `Stack`, that error be
 
 ## Building an error stack
 
-For cases where a set of errors need to be captured from a single procedure:
+Most cases will build a stack trace off a series of errors returned from the call stack:
+
+```go
+import (
+	"fmt"
+	errs "github.com/mkenney/go-errors"
+)
+
+func main() {
+	err := loadConfig()
+	fmt.Printf("%#v", err)
+}
+
+func readConfig() error {
+	err := fmt.Errorf("read: end of input")
+	return errs.Wrap(err, "could not read configuration file", errs.ErrEOF)
+}
+
+func decodeConfig() error {
+	err := readConfig()
+	return errs.Wrap(err, "could not decode configuration data", errs.ErrInvalidJSON)
+}
+
+func loadConfig() error {
+	err := decodeConfig()
+	return errs.Wrap(err, "service configuration could not be loaded", errs.ErrFatal)
+}
+```
+
+But for cases where a set of errors need to be captured from a single procedure, the `With()` call can be used:
 
 ```go
 import (
