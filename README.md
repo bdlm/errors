@@ -132,7 +132,7 @@ Standard error output `%s`:
 0002: Internal Server Error
 ```
 
-Single-line stack trace `%v`:
+Single-line stack trace, useful for logging `%v`:
 ```
 #0 - "service configuration could not be loaded" example_test.go:22 `github.com/mkenney/go-errors_test.loadConfig` {0002: a fatal error occurred} #1 - "could
 not decode configuration data" example_test.go:17 `github.com/mkenney/go-errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #2 - "could
