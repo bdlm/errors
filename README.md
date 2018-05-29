@@ -24,12 +24,12 @@ if !decodeSomeJSON() {
 
 ```go
 err := decodeSomeJSON()
-err := errs.Wrap("could not read configuration")
+err = errs.Wrap("could not read configuration")
 ```
 
 ## Define error codes
 
-Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/mkenney/go-errors/blob/master/codes.go).
+Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/mkenney/go-errors/blob/master/codes.go). `HTTPStatus` is optional and a convenience property that allows automation of HTTP status codes based on internal error codes.
 
 ```go
 import (
