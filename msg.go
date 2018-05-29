@@ -14,6 +14,9 @@ type Msg struct {
 String implements the Stringer interface
 */
 func (msg Msg) String() string {
+	if nil == msg.err {
+		return ""
+	}
 	return msg.err.Error()
 }
 
