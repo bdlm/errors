@@ -1,7 +1,9 @@
 # go-errors
 
 ```go
-import errs "github.com/mkenney/go-errors"
+import (
+	errs "github.com/mkenney/go-errors"
+)
 ```
 
 Go errors is inspired by `pkg/errors` and uses a similar API but adds support for error codes.
@@ -30,12 +32,17 @@ err := errs.Wrap("could not read configuration")
 Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/mkenney/go-errors/blob/master/codes.go).
 
 ```go
+import (
+	errs "github.com/mkenney/go-errors"
+)
+
 const (
 	// Error codes below 1000 are reserved future use by the errors
 	// package.
 	UserError errs.Code = iota + 1000
 	InternalError
 )
+
 func init() {
 	errs.Codes[UserError] = errs.Metadata{
 		Internal:   "bad user input",
@@ -48,6 +55,7 @@ func init() {
 		HTTPStatus: 500,
 	}
 }
+
 func SomeFunc() error {
 	return errs.New("SomeFunc failed because of things", InternalError)
 }
@@ -77,11 +85,15 @@ In this case, if the original `err` is not an instance of `Stack`, that error be
 
 ## Building an error stack
 
-For cases where a set of errors need to be captured:
+For cases where a set of errors need to be captured from a single procedure:
 
 ```go
-func doStuff() error {
-	var errStack errs
+import (
+	errs "github.com/mkenney/go-errors"
+)
+
+func doSteps() error {
+	var errStack errs.Err
 
 	err := doStep1()
 	if nil != err {
