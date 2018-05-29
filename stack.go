@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path"
 	"runtime"
-	"text/tabwriter"
 )
 
 /*
@@ -69,17 +68,19 @@ func (errs Err) Code() Code {
 Error implements the error interface.
 */
 func (errs Err) Error() string {
-	meta, ok := Codes[errs.Code()]
-	if !ok {
-		meta = Codes[ErrUnspecified]
+	msg := ""
+
+	if _, ok := Codes[errs.Code()]; ok {
+		msg = Codes[errs.Code()].External
+	} else if len(errs) > 0 {
+		msg = errs[len(errs)-1].Error()
 	}
-	return meta.External
+
+	return msg
 }
 
 /*
-Format implements fmt.Formatter.
-
-https://golang.org/pkg/fmt/#hdr-Printing
+Format implements fmt.Formatter. https://golang.org/pkg/fmt/#hdr-Printing
 
 Format formats the stack trace output. Several verbs are supported:
 	%s  - Returns the user-safe error string mapped to the error code or
@@ -102,69 +103,59 @@ func (errs Err) Format(s fmt.State, verb rune) {
 			err := errs[k]
 			msg, ok := Codes[err.code]
 			if !ok {
-				msg = Codes[ErrUnspecified]
+				msg = Codes[ErrUnknown]
 			}
 			switch {
 			case s.Flag('+'):
-				w := tabwriter.NewWriter(s, 0, 0, 4, ' ', 0)
-				fmt.Fprintf(w, "%2d: %s\n", stackPos, runtime.FuncForPC(err.caller.Pc).Name())
-				fmt.Fprintf(w, "\t\tline: %s: %d\n", path.Base(err.caller.File), err.caller.Line)
-				fmt.Fprintf(w, "\t\tcode: %d: %s\n", err.code, msg.Internal)
-				fmt.Fprintf(w, "\t\tmesg: %s\n\n", err.msg)
-				w.Flush()
+				// Extended stack trace
+				fmt.Fprintf(s, "#%d: `%s`\n", stackPos, runtime.FuncForPC(err.caller.Pc).Name())
+				fmt.Fprintf(s, "\terror:   %s\n", err.msg)
+				fmt.Fprintf(s, "\tline:    %s:%d\n", path.Base(err.caller.File), err.caller.Line)
+				fmt.Fprintf(s, "\tcode:    %d - %s\n", err.code, msg.Internal)
+				fmt.Fprintf(s, "\tentry:   %v\n", runtime.FuncForPC(err.caller.Pc).Entry())
+				fmt.Fprintf(s, "\tmessage: %s\n\n", msg.External)
 
 			case s.Flag('#'):
 				// Condensed stack trace
-				w := tabwriter.NewWriter(s, 5, 1, 4, ' ', 0)
-				fmt.Fprintf(w, "%2d - %s:%d\t%s\t%d:%s\t%s\t\n",
+				fmt.Fprintf(s, "#%d - \"%s\" %s:%d `%s` {%04d: %s}\n",
 					stackPos,
+					err.msg,
 					path.Base(err.caller.File),
 					err.caller.Line,
 					runtime.FuncForPC(err.caller.Pc).Name(),
 					err.code,
 					msg.Internal,
-					err.msg,
 				)
-				w.Flush()
 
 			default:
-				// Condensed stack trace
-				w := tabwriter.NewWriter(s, 5, 1, 4, ' ', 0)
-				str := fmt.Sprintf(
-					"%2d - %s:%d\t%s\t%d:%s\t%s\t",
+				// Loggable stack trace
+				fmt.Fprintf(s, "#%d - \"%s\" %s:%d `%s` {%04d: %s} ",
 					stackPos,
+					err.msg,
 					path.Base(err.caller.File),
 					err.caller.Line,
 					runtime.FuncForPC(err.caller.Pc).Name(),
 					err.code,
 					msg.Internal,
-					err.msg,
 				)
-
-				// Condensed stack trace
-				if s.Flag('#') {
-					str += "\n"
-
-					// Inline stack trace
-				} else {
-					str += "\\n"
-				}
-
-				fmt.Fprint(w, str)
-				w.Flush()
 			}
 			stackPos++
 		}
 	default:
-		// Simple error messages
-		fmt.Fprintf(s, "%s", errs.Error())
+		// Externally-save error message
+		fmt.Fprintf(s, "%04d: %s", errs.Code(), errs.Error())
 	}
 }
 
 /*
-With adds a new error to the stack
+With adds a new error to the stack.
 */
 func (errs Err) With(err error) Err {
+	// Can't include a nil...
+	if nil == err {
+		return nil
+	}
+
 	if msg, ok := err.(Err); ok {
 		errs = append(errs, msg...)
 	} else if msg, ok := err.(Msg); ok {
@@ -183,25 +174,32 @@ func (errs Err) With(err error) Err {
 /*
 Wrap wraps an error into the stack.
 */
-func Wrap(err error, msg string, code Code) Err {
+func Wrap(err error, msg string, code ...Code) Err {
 	// Can't wrap a nil...
 	if nil == err {
 		return nil
 	}
+
 	var errs Err
+	var errCode Code
 	var ok bool
+
+	if len(code) > 0 {
+		errCode = code[0]
+	}
+
 	if errs, ok = err.(Err); ok {
 		errs = errs.With(Msg{
 			err:    err,
 			caller: getCaller(),
-			code:   code,
+			code:   errCode,
 			msg:    msg,
 		})
 	} else {
 		errs = Err{Msg{
 			err:    err,
 			caller: getCaller(),
-			code:   code,
+			code:   errCode,
 			msg:    msg,
 		}}
 	}
