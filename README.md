@@ -75,6 +75,34 @@ if err != nil {
 
 In this case, if the original `err` is not an instance of `Stack`, that error becomes the root of the error stack.
 
+## Building an error stack
+
+For cases where a set of errors need to be captured:
+
+```go
+func doStuff() error {
+	var errStack errs
+
+	err := doStep1()
+	if nil != err {
+		errStack.With(err, "step 1 failed")
+	}
+
+
+	err = doStep2()
+	if nil != err {
+		errStack = errs.Wrap(err, "step 2 failed")
+	}
+
+	err = doStep3()
+	if nil != err {
+		errStack = errs.Wrap(err, "step 3 failed")
+	}
+
+	return errStack
+}
+```
+
 ## Root cause of an error stack
 
 Retrieving the root cause of an error stack is straightforward:
@@ -82,6 +110,8 @@ Retrieving the root cause of an error stack is straightforward:
 ```go
 log.Println(err.(errs.Stack).Cause())
 ```
+
+## Output formats
 
 The Formatter interface has been implemented to provide access to a stack trace with the `%v` verb.
 
