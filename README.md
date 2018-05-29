@@ -103,12 +103,12 @@ func doSteps() error {
 
 	err = doStep2()
 	if nil != err {
-		errStack = errs.Wrap(err, "step 2 failed")
+		errs.With(err, "step 2 failed")
 	}
 
 	err = doStep3()
 	if nil != err {
-		errStack = errs.Wrap(err, "step 3 failed")
+		errs.With(err, "step 3 failed")
 	}
 
 	return errStack
