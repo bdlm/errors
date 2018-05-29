@@ -33,7 +33,7 @@ func getCaller() Caller {
 	a := 0
 	for {
 		if caller.Pc, caller.File, caller.Line, caller.Ok = runtime.Caller(a + 2); caller.Ok {
-			if !strings.Contains(caller.File, "github.com/ReturnPath/rp-auth/error") {
+			if !strings.Contains(caller.File, "github.com/mkenney/go-errors") {
 				break
 			}
 		} else {
