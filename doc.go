@@ -1,7 +1,7 @@
 /*
-Package errors is inspired by `pkg/errors` and uses a similar API but
-adds support for error codes. Error codes are always optional.
-
+Package errors is inspired by `pkg/errors` (https://github.com/pkg/errors)
+and uses a similar API but adds support for error codes. Error codes are
+always optional.
 
 	import (
 		errs "github.com/mkenney/go-errors"

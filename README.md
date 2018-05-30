@@ -18,7 +18,7 @@ import (
 )
 ```
 
-Go errors is inspired by `pkg/errors` and uses a similar API but adds support for error codes. Error codes are always optional.
+Go errors is inspired by [`pkg/errors`](https://github.com/pkg/errors) and uses a similar API but adds support for error codes. Error codes are always optional.
 
 ## Error stacks
 
