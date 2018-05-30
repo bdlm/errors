@@ -148,26 +148,39 @@ func (errs Err) Format(s fmt.State, verb rune) {
 }
 
 /*
-With adds a new error to the stack.
+With adds a new error to the stack without changing the leading cause.
 */
 func (errs Err) With(err error) Err {
 	// Can't include a nil...
 	if nil == err {
-		return nil
+		return errs
 	}
 
-	if msg, ok := err.(Err); ok {
-		errs = append(errs, msg...)
-	} else if msg, ok := err.(Msg); ok {
-		errs = append(errs, msg)
-	} else {
+	if 0 == len(errs) {
 		errs = append(errs, Msg{
 			err:    err,
 			caller: getCaller(),
 			code:   0,
-			msg:    "",
+			msg:    err.Error(),
 		})
+	} else {
+		top := errs[len(errs)-1]
+		errs = errs[:len(errs)-1]
+		if msg, ok := err.(Err); ok {
+			errs = append(errs, msg...)
+		} else if msg, ok := err.(Msg); ok {
+			errs = append(errs, msg)
+		} else {
+			errs = append(errs, Msg{
+				err:    err,
+				caller: getCaller(),
+				code:   0,
+				msg:    err.Error(),
+			})
+		}
+		errs = append(errs, top)
 	}
+
 	return errs
 }
 
@@ -177,7 +190,7 @@ Wrap wraps an error into the stack.
 func Wrap(err error, msg string, code ...Code) Err {
 	// Can't wrap a nil...
 	if nil == err {
-		return nil
+		return New(msg, code...)
 	}
 
 	var errs Err
@@ -189,12 +202,19 @@ func Wrap(err error, msg string, code ...Code) Err {
 	}
 
 	if errs, ok = err.(Err); ok {
-		errs = errs.With(Msg{
-			err:    err,
-			caller: getCaller(),
-			code:   errCode,
-			msg:    msg,
-		})
+		if msg, ok := err.(Err); ok {
+			errs = append(errs, msg...)
+		} else if msg, ok := err.(Msg); ok {
+			errs = append(errs, msg)
+		} else {
+			errs = append(errs, Msg{
+				err:    err,
+				caller: getCaller(),
+				code:   0,
+				msg:    "",
+			})
+		}
+
 	} else {
 		errs = Err{Msg{
 			err:    err,
