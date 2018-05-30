@@ -114,7 +114,7 @@ func loadConfig() error {
 }
 ```
 
-But for cases where a set of errors need to be captured from a single procedure, the `With()` call can be used:
+But for cases where a set of errors need to be captured from a single procedure, the `With()` call can be used. The with call adds an error to the stack behind the leading error:
 
 ```go
 import (
@@ -150,6 +150,17 @@ Retrieving the root cause of an error stack is straightforward:
 
 ```go
 log.Println(err.(errs.Stack).Cause())
+```
+
+Similar to `pkg/errors`, you can easily switch on the type of any error in the stack (including the causer):
+
+```go
+switch err.(errs.Err).Cause().err.(type) {
+case *MyError:
+        // handle specifically
+default:
+        // unknown error
+}
 ```
 
 ## Output formats
