@@ -1,5 +1,17 @@
 # go-errors
 
+<p align="center">
+	<a href="https://github.com/mkenney/go-errors/blob/master/LICENSE"><img src="https://img.shields.io/github/license/mkenney/go-errors.svg" alt="MIT License"></a>
+	<a href="https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta"><img src="https://img.shields.io/badge/stability-beta-33bbff.svg" alt="Beta"></a>
+	<a href="https://travis-ci.org/mkenney/go-errors"><img src="https://travis-ci.org/mkenney/go-errors.svg?branch=master" alt="Build status"></a>
+	<a href="https://codecov.io/gh/mkenney/go-errors"><img src="https://img.shields.io/codecov/c/github/mkenney/go-errors/master.svg" alt="Coverage status"></a>
+	<a href="https://goreportcard.com/report/github.com/mkenney/go-errors"><img src="https://goreportcard.com/badge/github.com/mkenney/go-errors" alt="Go Report Card"></a>
+	<a href="https://github.com/mkenney/go-errors/issues"><img src="https://img.shields.io/github/issues-raw/mkenney/go-errors.svg" alt="Github issues"></a>
+	<a href="https://github.com/mkenney/go-errors/pulls"><img src="https://img.shields.io/github/issues-pr/mkenney/go-errors.svg" alt="Github pull requests"></a>
+	<a href="https://godoc.org/github.com/mkenney/go-errors"><img src="https://godoc.org/github.com/mkenney/go-errors?status.svg" alt="GoDoc"></a>
+</p>
+
+
 ```go
 import (
 	errs "github.com/mkenney/go-errors"
