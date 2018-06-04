@@ -1,20 +1,20 @@
-# go-errors
+# errors
 
 <p align="center">
-	<a href="https://github.com/mkenney/go-errors/blob/master/LICENSE"><img src="https://img.shields.io/github/license/mkenney/go-errors.svg" alt="MIT License"></a>
+	<a href="https://github.com/bdlm/errors/blob/master/LICENSE"><img src="https://img.shields.io/github/license/bdlm/errors.svg" alt="BSD-2-Clause"></a>
 	<a href="https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta"><img src="https://img.shields.io/badge/stability-beta-33bbff.svg" alt="Beta"></a>
-	<a href="https://travis-ci.org/mkenney/go-errors"><img src="https://travis-ci.org/mkenney/go-errors.svg?branch=master" alt="Build status"></a>
-	<a href="https://codecov.io/gh/mkenney/go-errors"><img src="https://img.shields.io/codecov/c/github/mkenney/go-errors/master.svg" alt="Coverage status"></a>
-	<a href="https://goreportcard.com/report/github.com/mkenney/go-errors"><img src="https://goreportcard.com/badge/github.com/mkenney/go-errors" alt="Go Report Card"></a>
-	<a href="https://github.com/mkenney/go-errors/issues"><img src="https://img.shields.io/github/issues-raw/mkenney/go-errors.svg" alt="Github issues"></a>
-	<a href="https://github.com/mkenney/go-errors/pulls"><img src="https://img.shields.io/github/issues-pr/mkenney/go-errors.svg" alt="Github pull requests"></a>
-	<a href="https://godoc.org/github.com/mkenney/go-errors"><img src="https://godoc.org/github.com/mkenney/go-errors?status.svg" alt="GoDoc"></a>
+	<a href="https://travis-ci.org/bdlm/errors"><img src="https://travis-ci.org/bdlm/errors.svg?branch=master" alt="Build status"></a>
+	<a href="https://codecov.io/gh/bdlm/errors"><img src="https://img.shields.io/codecov/c/github/bdlm/errors/master.svg" alt="Coverage status"></a>
+	<a href="https://goreportcard.com/report/github.com/bdlm/errors"><img src="https://goreportcard.com/badge/github.com/bdlm/errors" alt="Go Report Card"></a>
+	<a href="https://github.com/bdlm/errors/issues"><img src="https://img.shields.io/github/issues-raw/bdlm/errors.svg" alt="Github issues"></a>
+	<a href="https://github.com/bdlm/errors/pulls"><img src="https://img.shields.io/github/issues-pr/bdlm/errors.svg" alt="Github pull requests"></a>
+	<a href="https://godoc.org/github.com/bdlm/errors"><img src="https://godoc.org/github.com/bdlm/errors?status.svg" alt="GoDoc"></a>
 </p>
 
 
 ```go
 import (
-	errs "github.com/mkenney/go-errors"
+	errs "github.com/bdlm/errors"
 )
 ```
 
@@ -41,11 +41,11 @@ err = errs.Wrap(err, "could not read configuration")
 
 ## Define error codes
 
-Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/mkenney/go-errors/blob/master/codes.go). `HTTPStatus` is optional and a convenience property that allows automation of HTTP status responses based on internal error codes. The `Code` definition associated with error at the top of the stack (most recent error) should be used for HTTP status output.
+Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/bdlm/errors/blob/master/codes.go). `HTTPStatus` is optional and a convenience property that allows automation of HTTP status responses based on internal error codes. The `Code` definition associated with error at the top of the stack (most recent error) should be used for HTTP status output.
 
 ```go
 import (
-	errs "github.com/mkenney/go-errors"
+	errs "github.com/bdlm/errors"
 )
 
 const (
@@ -102,7 +102,7 @@ Most cases will build a stack trace off a series of errors returned from the cal
 ```go
 import (
 	"fmt"
-	errs "github.com/mkenney/go-errors"
+	errs "github.com/bdlm/errors"
 )
 
 func main() {
@@ -130,7 +130,7 @@ But for cases where a set of errors need to be captured from a single procedure,
 
 ```go
 import (
-	errs "github.com/mkenney/go-errors"
+	errs "github.com/bdlm/errors"
 )
 
 func doSteps() error {
@@ -167,7 +167,7 @@ log.Println(err.(errs.Stack).Cause())
 Similar to `pkg/errors`, you can easily switch on the type of any error in the stack (including the causer):
 
 ```go
-switch err.(errs.Err).Cause().err.(type) {
+switch err.(errs.Err).Cause().(type) {
 case *MyError:
         // handle specifically
 default:
@@ -186,35 +186,35 @@ Standard error output, use with error codes to ensure appropriate user-facing me
 
 Single-line stack trace, useful for logging `%v`:
 ```
-#0 - "service configuration could not be loaded" example_test.go:22 `github.com/mkenney/go-errors_test.loadConfig` {0002: a fatal error occurred} #1 - "could
-not decode configuration data" example_test.go:17 `github.com/mkenney/go-errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #2 - "could
-not read configuration file" example_test.go:12 `github.com/mkenney/go-errors_test.readConfig` {0100: unexpected EOF}
+#0 - "service configuration could not be loaded" example_test.go:22 `github.com/bdlm/errors_test.loadConfig` {0002: a fatal error occurred} #1 - "could
+not decode configuration data" example_test.go:17 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #2 - "could
+not read configuration file" example_test.go:12 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
 ```
 
 Multi-line condensed stack trace `%#v`:
 ```
-#0 - "service configuration could not be loaded" example_test.go:22 `github.com/mkenney/go-errors_test.loadConfig` {0002: a fatal error occurred}
-#1 - "could not decode configuration data" example_test.go:17 `github.com/mkenney/go-errors_test.decodeConfig` {0200: invalid JSON data could not be decoded}
-#2 - "could not read configuration file" example_test.go:12 `github.com/mkenney/go-errors_test.readConfig` {0100: unexpected EOF}
+#0 - "service configuration could not be loaded" example_test.go:22 `github.com/bdlm/errors_test.loadConfig` {0002: a fatal error occurred}
+#1 - "could not decode configuration data" example_test.go:17 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded}
+#2 - "could not read configuration file" example_test.go:12 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
 ```
 
 Multi-line detailed stack trace `%+v`:
 ```
-#0: `github.com/mkenney/go-errors_test.loadConfig`
+#0: `github.com/bdlm/errors_test.loadConfig`
         error:   service configuration could not be loaded
         line:    example_test.go:22
         code:    2 - a fatal error occurred
         entry:   17741072
         message: Internal Server Error
 
-#1: `github.com/mkenney/go-errors_test.decodeConfig`
+#1: `github.com/bdlm/errors_test.decodeConfig`
         error:   could not decode configuration data
         line:    example_test.go:17
         code:    200 - invalid JSON data could not be decoded
         entry:   17740848
         message: Invalid JSON Data
 
-#2: `github.com/mkenney/go-errors_test.readConfig`
+#2: `github.com/bdlm/errors_test.readConfig`
         error:   could not read configuration file
         line:    example_test.go:12
         code:    100 - unexpected EOF
