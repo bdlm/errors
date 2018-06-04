@@ -2,18 +2,30 @@ package errors
 
 func init() {
 	// Internal errors
-	//Codes[ErrUnspecified] = Metadata{"Internal Server Error", "error code unspecified", 0}
-	Codes[ErrUnknown] = Metadata{"Internal Server Error", "an unknown error occurred", 500}
-	Codes[ErrFatal] = Metadata{"Internal Server Error", "a fatal error occurred", 500}
+	//Codes[ErrUnspecified] = ErrCode{"Error Unspecified", "error code unspecified", 500}
+	Codes[ErrUnknown] = ErrCode{Int: "unknown error", HTTP: 500}
+	Codes[ErrFatal] = ErrCode{"Internal Server Error", "fatal error", 500}
 
 	// I/O errors
-	Codes[ErrEOF] = Metadata{"End of input", "unexpected EOF", 400}
+	Codes[ErrEOF] = ErrCode{"End of input", "unexpected EOF", 400}
 
 	// Encoding errors
-	Codes[ErrInvalidJSON] = Metadata{"Invalid JSON Data", "invalid JSON data could not be decoded", 400}
+	Codes[ErrInvalidJSON] = ErrCode{"Invalid JSON Data", "invalid JSON data could not be decoded", 400}
 
 	// Server errors
-	Codes[ErrInvalidHTTPMethod] = Metadata{"Invalid HTTP Method", "an invalid HTTP method was requested", 400}
+	Codes[ErrInvalidHTTPMethod] = ErrCode{"Invalid HTTP Method", "an invalid HTTP method was requested", 400}
+}
+
+/*
+Coder defines an interface for an error code.
+*/
+type Coder interface {
+	// External (user) facing error text.
+	String() string
+	// Internal only (logs) error text.
+	Detail() string
+	// HTTP status that should be used for the associated error code.
+	HTTPStatus() int
 }
 
 /*
@@ -22,31 +34,39 @@ Code defines an error code type.
 type Code int
 
 /*
-Metadata contains metadata that can be associated with an error code.
-*/
-type Metadata struct {
-	// External (user) facing error text.
-	External string
-	// Internal only (logs) error text.
-	Internal string
-	// HTTP status that should be used for the associated error code.
-	HTTPStatus int
-}
-
-/*
 Codes contains a map of error codes to metadata
 */
-var Codes = map[Code]Metadata{}
+var Codes = make(map[Code]Coder)
+
+/*
+ErrCode implements coder
+*/
+type ErrCode struct {
+	// External (user) facing error text.
+	Ext string
+	// Internal only (logs) error text.
+	Int string
+	// HTTP status that should be used for the associated error code.
+	HTTP int
+}
+
+func (code ErrCode) String() string {
+	return code.Ext
+}
+func (code ErrCode) Detail() string {
+	return code.Int
+}
+func (code ErrCode) HTTPStatus() int {
+	return code.HTTP
+}
 
 /*
 Internal errors
 */
 const (
-	// ErrUnspecified - 0: The error code was unspecified.
-	ErrUnspecified Code = iota
-	// ErrUnknown - 1: An unknown error occurred.
-	ErrUnknown
-	// ErrFatal - 2: An fatal error occurred.
+	// ErrUnknown - 0: An unknown error occurred.
+	ErrUnknown Code = iota
+	// ErrFatal - 1: An fatal error occurred.
 	ErrFatal
 )
 

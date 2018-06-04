@@ -150,7 +150,7 @@ Retrieving the root cause of an error stack is straightforward:
 Similar to `pkg/errors`, you can easily switch on the type of any error
 in the stack (including the causer):
 
-	switch err.(errs.Err).Cause().err.(type) {
+	switch err.(errs.Err).Cause().(type) {
 	case *MyError:
 			// handle specifically
 	default:
