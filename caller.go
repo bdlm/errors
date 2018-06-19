@@ -52,14 +52,5 @@ func (call Call) String() string {
 func getCaller() Caller {
 	call := Call{}
 	call.pc, call.file, call.line, call.ok = runtime.Caller(2)
-	//a := 0
-	//for {
-	//	if call.pc, call.file, call.line, call.ok = runtime.Caller(a + 2); call.ok {
-	//		break
-	//	} else {
-	//		break
-	//	}
-	//	a++
-	//}
 	return call
 }

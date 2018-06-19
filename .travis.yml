@@ -1,7 +1,10 @@
+notifications:
+    slack:
+        secure: OOW38dk5kJaZQEPT5dFWmNk8eMS0dYH+Rt0MtzrLRlz4mLgBa2urSZf7lSSlTW81FjI/ts1YngIegM9S9UKkbbkO1KNXUTzLT+rIcVIZd0mt2RpmISt7sFWs4VixKbiazbZGn4DMRKHer4A3ZuPr4HPJSuHDBkayoiZPlH6Uiki4Ep3u7+hyYF7utLKeaWEe5YeRz8smv/SEYFboBWKkNYUaJOR8g+pCbUiH83c8VYGTArZV/6BLdbVLScp3IK1hPMbMse5vTCe+k7p4TF5HfQYeEuASXC5iFSDOFSIXeXb1ElabGjWTY7pesmnaDi2ZWItHCGGZZIdHv2nqGa3EY8wW2Co3uUBgF9qwwQdZAWLnwriwkFG97hewEilMnbMBid3FtLK/K4vEgdUdVJWFbkFTTbQMkZgqCn37D6QG+TwlBzPKDkkMtrl2hLEf582Sy6yKRc1cikRDPhtT+xzN2olWgUd3x4Nc0yXOcEoPLS438TzBRH3Jq7KDXw3dnOiCRYdtWUCNZwtd2nBfSTAZ1yHWr3Xy+jDqSXm8FPoMwJ8TDmF3lkB/eTS/6wSiAlHa+B8YOXziSRe/hf9QAc1IPe5+g6e7qmPEcBPh/zcnb6MpDYgVGThzHotBXkUY5C0wD4loy20jVi9j8bA8Tqklp9FhQFfOiHXmUUqvDxGcfzQ=
+
 language: go
 go_import_path: github.com/bdlm/errors
 go:
-    - 1.4.x
     - 1.5.x
     - 1.6.x
     - 1.7.x
@@ -11,4 +14,7 @@ go:
     - tip
 
 script:
-    - go test -v ./...
+    - sh .travis.sh
+
+after_success:
+    - bash <(curl -s https://codecov.io/bash)

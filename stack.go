@@ -135,7 +135,7 @@ func (errs Err) Format(state fmt.State, verb rune) {
 				fmt.Fprintf(str, "\terror:   %s\n", err.Msg())
 				fmt.Fprintf(str, "\tline:    %s:%d\n", path.Base(err.Caller().File()), err.Caller().Line())
 				fmt.Fprintf(str, "\tcode:    %s\n", errMsgInt)
-				fmt.Fprintf(str, "\tmessage: %s\n\n", errMsgExt)
+				fmt.Fprintf(str, "\tmessage: %s\n", errMsgExt)
 
 			case state.Flag('#'):
 				// Condensed stack trace

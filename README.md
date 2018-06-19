@@ -2,7 +2,7 @@
 
 <p align="center">
 	<a href="https://github.com/bdlm/errors/blob/master/LICENSE"><img src="https://img.shields.io/github/license/bdlm/errors.svg" alt="BSD-2-Clause"></a>
-	<a href="https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta"><img src="https://img.shields.io/badge/stability-beta-33bbff.svg" alt="Beta"></a>
+	<a href="https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#alpha"><img src="https://img.shields.io/badge/stability-alpha-f4d03f.svg" alt="Alpha"></a>
 	<a href="https://travis-ci.org/bdlm/errors"><img src="https://travis-ci.org/bdlm/errors.svg?branch=master" alt="Build status"></a>
 	<a href="https://codecov.io/gh/bdlm/errors"><img src="https://img.shields.io/codecov/c/github/bdlm/errors/master.svg" alt="Coverage status"></a>
 	<a href="https://goreportcard.com/report/github.com/bdlm/errors"><img src="https://goreportcard.com/badge/github.com/bdlm/errors" alt="Go Report Card"></a>
@@ -179,45 +179,50 @@ default:
 
 The Formatter interface has been implemented to provide access to a stack trace with the `%v` verb.
 
-Standard error output, use with error codes to ensure appropriate user-facing messages `%s`:
+Standard error output, use with error codes to ensure appropriate user-facing messages `%v`:
 ```
-0002: Internal Server Error
+0000: failed to load configuration
 ```
 
-Single-line stack trace, useful for logging `%v`:
+Single-line stack trace, useful for logging `%-v`:
 ```
-#0 - "service configuration could not be loaded" example_test.go:22 `github.com/bdlm/errors_test.loadConfig` {0002: a fatal error occurred} #1 - "could
-not decode configuration data" example_test.go:17 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #2 - "could
-not read configuration file" example_test.go:12 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
+#4 - "failed to load configuration" examples_test.go:36 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: unknown error} #3 - "service configuration could not be loaded" mocks_test.go:16 `github.com/bdlm/errors_test.loadConfig` {0001: fatal error} #2 - "could not decode configuration data" mocks_test.go:21 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #1 - "could not read configuration file" mocks_test.go:26 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF} #0 - "read: end of input" mocks_test.go:26 `github.com/bdlm/errors_test.readConfig` {0000: unknown error}
 ```
 
 Multi-line condensed stack trace `%#v`:
 ```
-#0 - "service configuration could not be loaded" example_test.go:22 `github.com/bdlm/errors_test.loadConfig` {0002: a fatal error occurred}
-#1 - "could not decode configuration data" example_test.go:17 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded}
-#2 - "could not read configuration file" example_test.go:12 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
+#4 - "failed to load configuration" examples_test.go:36 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: unknown error}
+#3 - "service configuration could not be loaded" mocks_test.go:16 `github.com/bdlm/errors_test.loadConfig` {0001: fatal error}
+#2 - "could not decode configuration data" mocks_test.go:21 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded}
+#1 - "could not read configuration file" mocks_test.go:26 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
+#0 - "read: end of input" mocks_test.go:26 `github.com/bdlm/errors_test.readConfig` {0000: unknown error}
 ```
 
 Multi-line detailed stack trace `%+v`:
 ```
-#0: `github.com/bdlm/errors_test.loadConfig`
-        error:   service configuration could not be loaded
-        line:    example_test.go:22
-        code:    2 - a fatal error occurred
-        entry:   17741072
-        message: Internal Server Error
-
-#1: `github.com/bdlm/errors_test.decodeConfig`
-        error:   could not decode configuration data
-        line:    example_test.go:17
-        code:    200 - invalid JSON data could not be decoded
-        entry:   17740848
-        message: Invalid JSON Data
-
-#2: `github.com/bdlm/errors_test.readConfig`
-        error:   could not read configuration file
-        line:    example_test.go:12
-        code:    100 - unexpected EOF
-        entry:   17740576
-        message: End of input
+#4: `github.com/bdlm/errors_test.ExampleWrap_backtrace`
+	error:   failed to load configuration
+	line:    examples_test.go:36
+	code:    0000: unknown error
+	message: 0000: failed to load configuration
+#3: `github.com/bdlm/errors_test.loadConfig`
+	error:   service configuration could not be loaded
+	line:    mocks_test.go:16
+	code:    0001: fatal error
+	message: 0001: Internal Server Error
+#2: `github.com/bdlm/errors_test.decodeConfig`
+	error:   could not decode configuration data
+	line:    mocks_test.go:21
+	code:    0200: invalid JSON data could not be decoded
+	message: 0200: Invalid JSON Data
+#1: `github.com/bdlm/errors_test.readConfig`
+	error:   could not read configuration file
+	line:    mocks_test.go:26
+	code:    0100: unexpected EOF
+	message: 0100: End of input
+#0: `github.com/bdlm/errors_test.readConfig`
+	error:   read: end of input
+	line:    mocks_test.go:26
+	code:    0000: unknown error
+	message: 0000: read: end of input
 ```
