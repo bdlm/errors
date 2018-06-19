@@ -7,25 +7,6 @@ import (
 	errs "github.com/bdlm/errors"
 )
 
-func readConfig() error {
-	err := fmt.Errorf("read: end of input")
-	return errs.Wrap(err, "could not read configuration file", errs.ErrEOF)
-}
-
-func decodeConfig() error {
-	err := readConfig()
-	return errs.Wrap(err, "could not decode configuration data", errs.ErrInvalidJSON)
-}
-
-func loadConfig() error {
-	err := decodeConfig()
-	return errs.Wrap(err, "service configuration could not be loaded", errs.ErrFatal)
-}
-
-func someWork() error {
-	return fmt.Errorf("failed to do work")
-}
-
 var errEOF = fmt.Errorf("read: end of input")
 var otherErr = fmt.Errorf("some other process failed")
 
@@ -62,49 +43,47 @@ func ExampleWrap_backtrace() {
 
 	// The %-v verb is useful for logging and prints the trace on a
 	// single line.
-	fmt.Printf("%-v\n", err)
+	fmt.Printf("%-v\n\n", err)
 
 	// The %#v verb prints each cause in the stack on a separate line.
-	fmt.Printf("%#v\n", err)
+	fmt.Printf("%#v\n\n", err)
 
 	// The %+v verb prints a verbose detailed backtrace intended for
 	// human consumption.
-	fmt.Printf("%+v\n", err)
+	fmt.Printf("%+v\n\n", err)
 
 	// Output: 0000: failed to load configuration
-	//#4 - "failed to load configuration" doc_test.go:55 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: unknown error} #3 - "service configuration could not be loaded" doc_test.go:22 `github.com/bdlm/errors_test.loadConfig` {0001: fatal error} #2 - "could not decode configuration data" doc_test.go:17 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #1 - "could not read configuration file" doc_test.go:12 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF} #0 - "read: end of input" doc_test.go:12 `github.com/bdlm/errors_test.readConfig` {0000: unknown error}
-	//#4 - "failed to load configuration" doc_test.go:55 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: unknown error}
-	//#3 - "service configuration could not be loaded" doc_test.go:22 `github.com/bdlm/errors_test.loadConfig` {0001: fatal error}
-	//#2 - "could not decode configuration data" doc_test.go:17 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded}
-	//#1 - "could not read configuration file" doc_test.go:12 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
-	//#0 - "read: end of input" doc_test.go:12 `github.com/bdlm/errors_test.readConfig` {0000: unknown error}
+	//#4 - "failed to load configuration" examples_test.go:36 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: unknown error} #3 - "service configuration could not be loaded" mocks_test.go:16 `github.com/bdlm/errors_test.loadConfig` {0001: fatal error} #2 - "could not decode configuration data" mocks_test.go:21 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #1 - "could not read configuration file" mocks_test.go:26 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF} #0 - "read: end of input" mocks_test.go:26 `github.com/bdlm/errors_test.readConfig` {0000: unknown error}
+	//
+	//#4 - "failed to load configuration" examples_test.go:36 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: unknown error}
+	//#3 - "service configuration could not be loaded" mocks_test.go:16 `github.com/bdlm/errors_test.loadConfig` {0001: fatal error}
+	//#2 - "could not decode configuration data" mocks_test.go:21 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded}
+	//#1 - "could not read configuration file" mocks_test.go:26 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
+	//#0 - "read: end of input" mocks_test.go:26 `github.com/bdlm/errors_test.readConfig` {0000: unknown error}
+	//
 	//#4: `github.com/bdlm/errors_test.ExampleWrap_backtrace`
 	//	error:   failed to load configuration
-	//	line:    doc_test.go:55
+	//	line:    examples_test.go:36
 	//	code:    0000: unknown error
 	//	message: 0000: failed to load configuration
-	//
 	//#3: `github.com/bdlm/errors_test.loadConfig`
 	//	error:   service configuration could not be loaded
-	//	line:    doc_test.go:22
+	//	line:    mocks_test.go:16
 	//	code:    0001: fatal error
 	//	message: 0001: Internal Server Error
-	//
 	//#2: `github.com/bdlm/errors_test.decodeConfig`
 	//	error:   could not decode configuration data
-	//	line:    doc_test.go:17
+	//	line:    mocks_test.go:21
 	//	code:    0200: invalid JSON data could not be decoded
 	//	message: 0200: Invalid JSON Data
-	//
 	//#1: `github.com/bdlm/errors_test.readConfig`
 	//	error:   could not read configuration file
-	//	line:    doc_test.go:12
+	//	line:    mocks_test.go:26
 	//	code:    0100: unexpected EOF
 	//	message: 0100: End of input
-	//
 	//#0: `github.com/bdlm/errors_test.readConfig`
 	//	error:   read: end of input
-	//	line:    doc_test.go:12
+	//	line:    mocks_test.go:26
 	//	code:    0000: unknown error
 	//	message: 0000: read: end of input
 }
@@ -136,16 +115,4 @@ func ExampleErr_With() {
 
 	fmt.Println(err)
 	// Output: 0001: Internal Server Error
-}
-
-func ExampleErr_Format() {
-	err := loadConfig()
-	if nil != err {
-		err = errs.Wrap(err, "could not load config")
-	}
-
-	fmt.Printf("%s", err)
-	fmt.Printf("%v", err)
-	fmt.Printf("%#v", err)
-	fmt.Printf("%+v", err)
 }
