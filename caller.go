@@ -5,6 +5,9 @@ import (
 	"runtime"
 )
 
+/*
+Caller defines an interface to runtime caller results.
+*/
 type Caller interface {
 	File() string
 	Line() int

@@ -1,5 +1,8 @@
 package errors
 
+/*
+ErrMsg defines the interface to error message data.
+*/
 type ErrMsg interface {
 	Caller() Caller
 	Code() Code
