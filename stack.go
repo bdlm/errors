@@ -2,7 +2,6 @@ package errors
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"path"
 	"runtime"
@@ -19,13 +18,9 @@ New returns an error with caller information for debugging. `codes` is
 optional. Although you can pass multiple codes, only the first is
 accepted.
 */
-func New(msg string, codes ...Code) Err {
-	var code Code
-	if len(codes) > 0 {
-		code = codes[0]
-	}
+func New(code Code, msg string, data ...interface{}) Err {
 	return Err{Msg{
-		err:    errors.New(msg),
+		err:    fmt.Errorf(msg, data...),
 		caller: getCaller(),
 		code:   code,
 		msg:    msg,
@@ -175,17 +170,9 @@ func (errs Err) Format(state fmt.State, verb rune) {
 /*
 From creates a new error stack based on a provided error and returns it.
 */
-func From(err error, codes ...Code) Err {
-	var code Code
-
-	if len(codes) > 0 {
-		code = codes[0]
-	}
-
+func From(code Code, err error) Err {
 	if e, ok := err.(Err); ok {
-		if len(codes) > 0 && len(e) > 0 {
-			e[len(e)-1].SetCode(code)
-		}
+		e[len(e)-1].SetCode(code)
 		err = e
 	} else {
 		err = Err{Msg{
@@ -201,7 +188,7 @@ func From(err error, codes ...Code) Err {
 /*
 With adds a new error to the stack without changing the leading cause.
 */
-func (errs Err) With(err error) Err {
+func (errs Err) With(err error, msg string, data ...interface{}) Err {
 	// Can't include a nil...
 	if nil == err {
 		return errs
@@ -212,21 +199,34 @@ func (errs Err) With(err error) Err {
 			err:    err,
 			caller: getCaller(),
 			code:   0,
-			msg:    err.Error(),
+			msg:    fmt.Sprintf(msg, data...),
 		})
 	} else {
 		top := errs[len(errs)-1]
 		errs = errs[:len(errs)-1]
-		if msg, ok := err.(Err); ok {
-			errs = append(errs, msg...)
-		} else if msg, ok := err.(Msg); ok {
-			errs = append(errs, msg)
+		if msgs, ok := err.(Err); ok {
+			err := fmt.Errorf(msg, data...)
+			errs = append(errs, Msg{
+				err:    err,
+				caller: getCaller(),
+				code:   0,
+				msg:    fmt.Sprintf(msg, data...),
+			})
+			errs = append(errs, msgs...)
+		} else if msgs, ok := err.(Msg); ok {
+			err := fmt.Errorf(msg, data...)
+			errs = append(errs, Msg{
+				err:    err,
+				caller: getCaller(),
+				code:   0,
+				msg:    fmt.Sprintf(msg, data...),
+			}, msgs)
 		} else {
 			errs = append(errs, Msg{
 				err:    err,
 				caller: getCaller(),
 				code:   0,
-				msg:    err.Error(),
+				msg:    fmt.Sprintf(msg, data...),
 			})
 		}
 		errs = append(errs, top)
@@ -238,17 +238,12 @@ func (errs Err) With(err error) Err {
 /*
 Wrap wraps an error into a new stack led by msg.
 */
-func Wrap(err error, msg string, code ...Code) Err {
+func Wrap(err error, code Code, msg string, data ...interface{}) Err {
 	var errs Err
-	var errCode Code
 
 	// Can't wrap a nil...
 	if nil == err {
-		return New(msg, code...)
-	}
-
-	if len(code) > 0 {
-		errCode = code[0]
+		return New(code, msg)
 	}
 
 	if e, ok := err.(Err); ok {
@@ -265,9 +260,9 @@ func Wrap(err error, msg string, code ...Code) Err {
 	}
 
 	errs = append(errs, Msg{
-		err:    errors.New(msg),
+		err:    fmt.Errorf(msg, data...),
 		caller: getCaller(),
-		code:   errCode,
+		code:   code,
 		msg:    msg,
 	})
 

@@ -15,13 +15,13 @@ func ExampleNew() {
 
 	// If an error code isn't used or doesn't have a corresponding
 	// ErrCode defined, the error message is returned.
-	err = errs.New("this is an error message")
+	err = errs.New(0, "this is an error message")
 	fmt.Println(err)
 
 	// If an error with a corresponding ErrCode is specified, the
 	// user-safe error string mapped to the error code is returned,
 	// along with the code.
-	err = errs.New("this is an error message", errs.ErrFatal)
+	err = errs.New(errs.ErrFatal, "this is an error message")
 	fmt.Println(err)
 
 	// Output: 0000: this is an error message
@@ -33,7 +33,7 @@ func ExampleWrap_backtrace() {
 	// returning it up the call stack.
 	err := loadConfig()
 	if nil != err {
-		err = errs.Wrap(err, "failed to load configuration")
+		err = errs.Wrap(err, 0, "failed to load configuration")
 	}
 
 	// The %v formatting verb can be used to print out the stack trace
@@ -93,7 +93,7 @@ func ExampleFrom() {
 	// straightforward.
 	err := errors.New("my error")
 	if _, ok := err.(errs.Err); !ok {
-		err = errs.From(err)
+		err = errs.From(0, err)
 	}
 
 	fmt.Println(err)
@@ -107,9 +107,9 @@ func ExampleErr_With() {
 	err := loadConfig()
 	if nil != err {
 		if e, ok := err.(errs.Err); nil != err && ok {
-			err = e.With(errors.New("failed to load configuration"))
+			err = e.With(errs.New(0, "failed to load configuration"), "loadConfig returned an error")
 		} else {
-			err = errs.From(err)
+			err = errs.From(0, err)
 		}
 	}
 
