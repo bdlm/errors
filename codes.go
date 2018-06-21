@@ -50,13 +50,29 @@ type ErrCode struct {
 	HTTP int
 }
 
-func (code ErrCode) String() string {
-	return code.Ext
-}
+/*
+Detail returns the internal error message, if any.
+*/
 func (code ErrCode) Detail() string {
 	return code.Int
 }
+
+/*
+String implements stringer. String returns the external error message,
+if any.
+*/
+func (code ErrCode) String() string {
+	return code.Ext
+}
+
+/*
+HTTPStatus returns the associated HTTP status code, if any. Otherwise,
+returns 200.
+*/
 func (code ErrCode) HTTPStatus() int {
+	if 0 == code.HTTP {
+		return 200
+	}
 	return code.HTTP
 }
 

@@ -18,7 +18,7 @@ import (
 )
 ```
 
-Go errors is inspired by [`pkg/errors`](https://github.com/pkg/errors) and uses a similar API but adds support for error codes. Error codes are always optional.
+Go errors is inspired by [`pkg/errors`](https://github.com/pkg/errors) and uses a similar API but adds support for error codes. The default error code `0` is ignored.
 
 ## Error stacks
 
@@ -28,7 +28,7 @@ An error stack is an array of errors.
 
 ```go
 if !decodeSomeJSON() {
-    err := errs.New("validation failed")
+    err := errs.New(0, "validation failed")
 }
 ```
 
@@ -36,7 +36,7 @@ if !decodeSomeJSON() {
 
 ```go
 err := decodeSomeJSON()
-err = errs.Wrap(err, "could not read configuration")
+err = errs.Wrap(err, 0, "could not read configuration")
 ```
 
 ## Define error codes
@@ -69,7 +69,7 @@ func init() {
 }
 
 func SomeFunc() error {
-	return errs.New("SomeFunc failed because of things", InternalError)
+	return errs.New(InternalError, "SomeFunc failed because of things")
 }
 ```
 
@@ -79,7 +79,7 @@ Creating a new error defines the root of a backtrace.
 ```go
 _, err := ioutil.ReadAll(r)
 if err != nil {
-	return errs.New("read failed", errs.ErrUnknown)
+	return errs.New(errs.ErrUnknown, "read failed")
 }
 ```
 
@@ -89,7 +89,7 @@ The errors.Wrap function returns a new error that adds context to the original e
 ```go
 _, err := ioutil.ReadAll(r)
 if err != nil {
-	return errs.Wrap(err, "read failed", errs.ErrUnknown)
+	return errs.Wrap(err, errs.ErrUnknown, "read failed")
 }
 ```
 
@@ -112,17 +112,17 @@ func main() {
 
 func readConfig() error {
 	err := fmt.Errorf("read: end of input")
-	return errs.Wrap(err, "could not read configuration file", errs.ErrEOF)
+	return errs.Wrap(err, errs.ErrEOF, "could not read configuration file")
 }
 
 func decodeConfig() error {
 	err := readConfig()
-	return errs.Wrap(err, "could not decode configuration data", errs.ErrInvalidJSON)
+	return errs.Wrap(err, errs.ErrInvalidJSON, "could not decode configuration data")
 }
 
 func loadConfig() error {
 	err := decodeConfig()
-	return errs.Wrap(err, "service configuration could not be loaded", errs.ErrFatal)
+	return errs.Wrap(err, errs.ErrFatal, "service configuration could not be loaded")
 }
 ```
 

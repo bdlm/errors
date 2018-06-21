@@ -24,15 +24,30 @@ type Call struct {
 	pc     uintptr
 }
 
+/*
+File returns the caller file name.
+*/
 func (call Call) File() string {
 	return call.file
 }
+
+/*
+Line returns the caller line number.
+*/
 func (call Call) Line() int {
 	return call.line
 }
+
+/*
+Ok returns whether the caller data was successfully recovered.
+*/
 func (call Call) Ok() bool {
 	return call.ok
 }
+
+/*
+Pc returns the caller program counter.
+*/
 func (call Call) Pc() uintptr {
 	return call.pc
 }

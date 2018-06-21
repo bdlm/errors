@@ -13,17 +13,17 @@ import (
 
 func loadConfig() error {
 	err := decodeConfig()
-	return errs.Wrap(err, "service configuration could not be loaded", errs.ErrFatal)
+	return errs.Wrap(err, errs.ErrFatal, "service configuration could not be loaded")
 }
 
 func decodeConfig() error {
 	err := readConfig()
-	return errs.Wrap(err, "could not decode configuration data", errs.ErrInvalidJSON)
+	return errs.Wrap(err, errs.ErrInvalidJSON, "could not decode configuration data")
 }
 
 func readConfig() error {
 	err := fmt.Errorf("read: end of input")
-	return errs.Wrap(err, "could not read configuration file", errs.ErrEOF)
+	return errs.Wrap(err, errs.ErrEOF, "could not read configuration file")
 }
 
 func someWork() error {
