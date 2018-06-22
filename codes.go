@@ -20,12 +20,12 @@ func init() {
 Coder defines an interface for an error code.
 */
 type Coder interface {
-	// External (user) facing error text.
-	String() string
 	// Internal only (logs) error text.
 	Detail() string
 	// HTTP status that should be used for the associated error code.
 	HTTPStatus() int
+	// External (user) facing error text.
+	String() string
 }
 
 /*

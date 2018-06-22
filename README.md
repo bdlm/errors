@@ -45,12 +45,14 @@ Adding support for error codes is the primary motivation behind this project. Se
 
 ```go
 import (
+	"net/http"
+
 	errs "github.com/bdlm/errors"
 )
 
 const (
-	// Error codes below 1000 are reserved future use by the errors
-	// package.
+	// Error codes below 1000 are reserved future use by the
+	// "github.com/bdlm/errors" package.
 	UserError errs.Code = iota + 1000
 	SaveError
 )
@@ -59,17 +61,30 @@ func init() {
 	errs.Codes[UserError] = errs.Metadata{
 		Int:  "bad user input",
 		Ext:  "A user error occurred",
-		HTTP: 400,
+		HTTP: http.StatusBadRequest,
 	}
 	errs.Codes[SaveError] = errs.Metadata{
 		Int:  "could not save data",
 		Ext:  "An internal server occurred",
-		HTTP: 500,
+		HTTP: http.StatusInternalServerError,
 	}
 }
 
 func SaveData() error {
-	return errs.New(SaveError, "SaveData failed because of things")
+
+	...
+
+	if couldntWriteData {
+		return errs.New(SaveError, "SaveData could not write the data")
+	}
+	return nil
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	err := SaveData()
+	if nil != err {
+		w.WriteHeader(err.(errs.Err).HTTPStatus()) // 500 status
+	}
 }
 ```
 

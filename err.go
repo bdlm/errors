@@ -3,6 +3,7 @@ package errors
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"path"
 	"runtime"
 	"strings"
@@ -60,6 +61,14 @@ func (errs Err) Code() Code {
 }
 
 /*
+Detail implements the Coder interface. Detail returns the single-line
+stack trace.
+*/
+func (errs Err) Detail() string {
+	return fmt.Sprintf("%-v", errs)
+}
+
+/*
 Error implements the error interface.
 */
 func (errs Err) Error() string {
@@ -71,7 +80,21 @@ func (errs Err) Error() string {
 }
 
 /*
-String implements the stringer interface.
+HTTPStatus returns the associated HTTP status code, if any. Otherwise,
+returns 200.
+*/
+func (errs Err) HTTPStatus() int {
+	status := http.StatusOK
+	if len(errs) > 0 {
+		if code, ok := Codes[errs[len(errs)-1].Code()]; ok {
+			status = code.HTTPStatus()
+		}
+	}
+	return status
+}
+
+/*
+String implements the stringer and Coder interfaces.
 */
 func (errs Err) String() string {
 	return fmt.Sprintf("%s", errs)
