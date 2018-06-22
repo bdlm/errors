@@ -52,24 +52,24 @@ const (
 	// Error codes below 1000 are reserved future use by the errors
 	// package.
 	UserError errs.Code = iota + 1000
-	InternalError
+	SaveError
 )
 
 func init() {
 	errs.Codes[UserError] = errs.Metadata{
-		Internal:   "bad user input",
-		External:   "A user error occurred",
+		Int:        "bad user input",
+		Ext:        "A user error occurred",
 		HTTPStatus: 400,
 	}
-	errs.Codes[InternalError] = errs.Metadata{
-		Internal:   "could not save data",
-		External:   "An internal server occurred",
+	errs.Codes[SaveError] = errs.Metadata{
+		Int:        "could not save data",
+		Ext:        "An internal server occurred",
 		HTTPStatus: 500,
 	}
 }
 
-func SomeFunc() error {
-	return errs.New(InternalError, "SomeFunc failed because of things")
+func SaveData() error {
+	return errs.New(SaveError, "SaveData failed because of things")
 }
 ```
 
