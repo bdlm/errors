@@ -41,7 +41,7 @@ err = errs.Wrap(err, 0, "could not read configuration")
 
 ## Define error codes
 
-Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/bdlm/errors/blob/master/codes.go). `HTTPStatus` is optional and a convenience property that allows automation of HTTP status responses based on internal error codes. The `Code` definition associated with error at the top of the stack (most recent error) should be used for HTTP status output.
+Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/bdlm/errors/blob/master/codes.go). `HTTP` is optional and a convenience property that allows automation of HTTP status responses based on internal error codes. The `Code` definition associated with error at the top of the stack (most recent error) should be used for HTTP status output.
 
 ```go
 import (
@@ -57,14 +57,14 @@ const (
 
 func init() {
 	errs.Codes[UserError] = errs.Metadata{
-		Int:        "bad user input",
-		Ext:        "A user error occurred",
-		HTTPStatus: 400,
+		Int:  "bad user input",
+		Ext:  "A user error occurred",
+		HTTP: 400,
 	}
 	errs.Codes[SaveError] = errs.Metadata{
-		Int:        "could not save data",
-		Ext:        "An internal server occurred",
-		HTTPStatus: 500,
+		Int:  "could not save data",
+		Ext:  "An internal server occurred",
+		HTTP: 500,
 	}
 }
 
