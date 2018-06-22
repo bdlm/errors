@@ -39,7 +39,7 @@ err := decodeSomeJSON()
 err = errs.Wrap(err, 0, "could not read configuration")
 ```
 
-## Define error codes
+## Error codes
 
 Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/bdlm/errors/blob/master/codes.go). `HTTP` is optional and a convenience property that allows automation of HTTP status responses based on internal error codes. The `Code` definition associated with error at the top of the stack (most recent error) should be used for HTTP status output.
 
