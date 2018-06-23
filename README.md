@@ -210,7 +210,7 @@ default:
 Becase an error stack is just an array of errors iterating through it is trivial:
 
 ```go
-for e := range err.(errs.Err) {
+for _, e := range err.(errs.Err) {
 	fmt.Println(e)
 }
 ```
