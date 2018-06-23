@@ -109,7 +109,7 @@ if err != nil {
 
 ## Adding context to an error
 
-The errors.Wrap function returns a new error that adds context to the original error and starts an error stack:
+The errors.Wrap function returns a new error stack, adding context as the top error in the stack:
 ```go
 _, err := ioutil.ReadAll(r)
 if err != nil {
@@ -117,7 +117,7 @@ if err != nil {
 }
 ```
 
-In this case, if the original `err` is not an instance of `Stack`, that error becomes the root of the error stack.
+In this case, if the original `err` is not an instance of `Err`, that error becomes the root of the error stack.
 
 ## Building an error stack
 
@@ -202,6 +202,16 @@ case *MyError:
         // handle specifically
 default:
         // unknown error
+}
+```
+
+## Iterating the error stack
+
+Becase an error stack is just an array of errors iterating through it is trivial:
+
+```go
+for e := range err.(errs.Err) {
+	fmt.Println(e)
 }
 ```
 
