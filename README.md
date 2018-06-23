@@ -11,6 +11,7 @@
 	<a href="https://godoc.org/github.com/bdlm/errors"><img src="https://godoc.org/github.com/bdlm/errors?status.svg" alt="GoDoc"></a>
 </p>
 
+Go errors is inspired by [`pkg/errors`](https://github.com/pkg/errors) and uses a similar API but adds support for error codes. The default error code `0` is ignored.
 
 ```go
 import (
@@ -18,7 +19,15 @@ import (
 )
 ```
 
-Go errors is inspired by [`pkg/errors`](https://github.com/pkg/errors) and uses a similar API but adds support for error codes. The default error code `0` is ignored.
+One of the most common frustrations with go error handling is the lack of exceptions in the language. You can use the `panic`/`recover` method to simulate the behavior but that's akward, clunky, and hard to follow for many people. And for me, I commonly handle an exception and run additional code or may simply use an exception to inform my code about internal behavior from deeper in the call stack. `panic`/`recover` makes that impossible without what always feels like spaghetti code.
+
+As Pike says, errors are values, and when `panic`/`recover` isn't a reasonable solution you have to handle passing that information up the stack yourself. Which kind of sucks and leaves us with the `if err != nil` idiom which is fairly useless without a solid pattern behind it.
+
+Since the idom is that we handle the error all the way up the stack anyway, it's trivial to make errors much, much more useful with a good error package. [`pkg/errors`](https://github.com/pkg/errors) makes this very easy and supports tracing the call stack and the error callers, but it still doesn't have the concept of typed exceptions. If I get an `EOF` error I may want to do something different than if I get a `FileNotFound`, and even with [`pkg/errors`](https://github.com/pkg/errors) you have to inspect the contents of the error message. Error messages are for people, not programs.
+
+It is possible to define custom errors for each type but that's verbose and still very inflexible. This package mimics [`pkg/errors`](https://github.com/pkg/errors) but makes the error type a first class value. The default type (`0`) behaves the same as [`pkg/errors`](https://github.com/pkg/errors), but several common types are included and custom error codes are fully supported. Custom error types are fully compatible with this package as well and can be used freely with error type codes.
+
+In addition to typing errors, several optional convenience properties are available, including internal and external error messages (meant to separate internal error or debugging information from user-friendly messages), and HTTP status codes that can help facilitate API responses.
 
 ## Error stacks
 
@@ -100,7 +109,7 @@ if err != nil {
 
 ## Adding context to an error
 
-The errors.Wrap function returns a new error that adds context to the original error and starts an error stack:
+The errors.Wrap function returns a new error stack, adding context as the top error in the stack:
 ```go
 _, err := ioutil.ReadAll(r)
 if err != nil {
@@ -108,7 +117,7 @@ if err != nil {
 }
 ```
 
-In this case, if the original `err` is not an instance of `Stack`, that error becomes the root of the error stack.
+In this case, if the original `err` is not an instance of `Err`, that error becomes the root of the error stack.
 
 ## Building an error stack
 
@@ -185,7 +194,7 @@ Retrieving the root cause of an error stack is straightforward:
 log.Println(err.(errs.Stack).Cause())
 ```
 
-Similar to `pkg/errors`, you can easily switch on the type of any error in the stack (including the causer):
+You can easily switch on the type of any error in the stack (including the causer) as usual:
 
 ```go
 switch err.(errs.Err).Cause().(type) {
@@ -193,6 +202,21 @@ case *MyError:
         // handle specifically
 default:
         // unknown error
+}
+```
+
+## Iterating the error stack
+
+Becase an error stack is just an array of errors iterating through it is trivial:
+
+```go
+for _, e := range err.(errs.Err) {
+	fmt.Println(e.Code())
+	fmt.Println(e.Error())
+	fmt.Println(e.Msg())  // In the case of Wrap(), it is possible to suppliment
+	                      // an error with additional information, which is
+	                      // returned by Msg(). Otherwise, Msg() returns the same
+	                      // string as Error().
 }
 ```
 
