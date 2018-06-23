@@ -116,3 +116,29 @@ func ExampleErr_With() {
 	fmt.Println(err)
 	// Output: 1000: An invalid HTTP method was requested
 }
+
+func ExampleDetail() {
+	err := loadConfig()
+	if nil != err {
+		err = errs.Wrap(err, 0, "failed to load configuration")
+	}
+
+	// The single-line condensed stack trace is also availabe via the
+	// Detail() method
+	fmt.Println(err.(errs.Err).Detail())
+
+	// Output: #4 - "failed to load configuration" examples_test.go:123 `github.com/bdlm/errors_test.ExampleDetail` {0000: unknown error} #3 - "service configuration could not be loaded" mocks_test.go:22 `github.com/bdlm/errors_test.loadConfig` {1000: An invalid HTTP method was requested} #2 - "could not decode configuration data" mocks_test.go:27 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #1 - "could not read configuration file" mocks_test.go:32 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF} #0 - "read: end of input" mocks_test.go:32 `github.com/bdlm/errors_test.readConfig` {0000: unknown error}
+}
+
+func ExampleHTTPStatus() {
+	err := loadConfig()
+	if nil != err {
+		err = errs.Wrap(err, 0, "failed to load configuration")
+	}
+
+	// HTTPStatus() returns the HTTP status code associated with an error
+	// code, if any.
+	fmt.Println(err.(errs.Err).HTTPStatus())
+
+	// Output: 500
+}
