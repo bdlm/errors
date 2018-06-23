@@ -213,7 +213,9 @@ Becase an error stack is just an array of errors iterating through it is trivial
 for _, e := range err.(errs.Err) {
 	fmt.Println(e.Code())
 	fmt.Println(e.Error())
-	fmt.Println(e.Msg())
+	fmt.Println(e.Msg())  // In the case of Wrap(), it is possible to suppliment
+	                      // an error with additional information, which is
+	                      // returned by Msg()
 }
 ```
 
