@@ -114,5 +114,5 @@ func ExampleErr_With() {
 	}
 
 	fmt.Println(err)
-	// Output: 0001: Internal Server Error
+	// Output: 1000: An invalid HTTP method was requested
 }
