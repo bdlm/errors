@@ -39,18 +39,20 @@ err := decodeSomeJSON()
 err = errs.Wrap(err, 0, "could not read configuration")
 ```
 
-## Define error codes
+## Error codes
 
 Adding support for error codes is the primary motivation behind this project. See [`codes.go`](https://github.com/bdlm/errors/blob/master/codes.go). `HTTP` is optional and a convenience property that allows automation of HTTP status responses based on internal error codes. The `Code` definition associated with error at the top of the stack (most recent error) should be used for HTTP status output.
 
 ```go
 import (
+	"net/http"
+
 	errs "github.com/bdlm/errors"
 )
 
 const (
-	// Error codes below 1000 are reserved future use by the errors
-	// package.
+	// Error codes below 1000 are reserved future use by the
+	// "github.com/bdlm/errors" package.
 	UserError errs.Code = iota + 1000
 	SaveError
 )
@@ -59,17 +61,30 @@ func init() {
 	errs.Codes[UserError] = errs.Metadata{
 		Int:  "bad user input",
 		Ext:  "A user error occurred",
-		HTTP: 400,
+		HTTP: http.StatusBadRequest,
 	}
 	errs.Codes[SaveError] = errs.Metadata{
 		Int:  "could not save data",
 		Ext:  "An internal server occurred",
-		HTTP: 500,
+		HTTP: http.StatusInternalServerError,
 	}
 }
 
 func SaveData() error {
-	return errs.New(SaveError, "SaveData failed because of things")
+
+	...
+
+	if couldntWriteData {
+		return errs.New(SaveError, "SaveData could not write the data")
+	}
+	return nil
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	err := SaveData()
+	if nil != err {
+		w.WriteHeader(err.(errs.Err).HTTPStatus()) // 500 status
+	}
 }
 ```
 
@@ -102,17 +117,19 @@ Most cases will build a stack trace off a series of errors returned from the cal
 ```go
 import (
 	"fmt"
+
 	errs "github.com/bdlm/errors"
 )
 
-func main() {
-	err := loadConfig()
-	fmt.Printf("%#v", err)
-}
+const (
+	// Error codes below 1000 are reserved future use by the
+	// "github.com/bdlm/errors" package.
+	ConfigurationNotValid errs.Code = iota + 1000
+)
 
-func readConfig() error {
-	err := fmt.Errorf("read: end of input")
-	return errs.Wrap(err, errs.ErrEOF, "could not read configuration file")
+func loadConfig() error {
+	err := decodeConfig()
+	return errs.Wrap(err, ConfigurationNotValid, "service configuration could not be loaded")
 }
 
 func decodeConfig() error {
@@ -120,9 +137,13 @@ func decodeConfig() error {
 	return errs.Wrap(err, errs.ErrInvalidJSON, "could not decode configuration data")
 }
 
-func loadConfig() error {
-	err := decodeConfig()
-	return errs.Wrap(err, errs.ErrFatal, "service configuration could not be loaded")
+func readConfig() error {
+	err := fmt.Errorf("read: end of input")
+	return errs.Wrap(err, errs.ErrEOF, "could not read configuration file")
+}
+
+func someWork() error {
+	return fmt.Errorf("failed to do work")
 }
 ```
 
