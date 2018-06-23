@@ -15,9 +15,7 @@ Err defines an error heap.
 type Err []ErrMsg
 
 /*
-New returns an error with caller information for debugging. `codes` is
-optional. Although you can pass multiple codes, only the first is
-accepted.
+New returns an error with caller information for debugging.
 */
 func New(code Code, msg string, data ...interface{}) Err {
 	return Err{Msg{

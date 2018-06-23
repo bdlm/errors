@@ -117,17 +117,19 @@ Most cases will build a stack trace off a series of errors returned from the cal
 ```go
 import (
 	"fmt"
+
 	errs "github.com/bdlm/errors"
 )
 
-func main() {
-	err := loadConfig()
-	fmt.Printf("%#v", err)
-}
+const (
+	// Error codes below 1000 are reserved future use by the
+	// "github.com/bdlm/errors" package.
+	ConfigurationNotValid errs.Code = iota + 1000
+)
 
-func readConfig() error {
-	err := fmt.Errorf("read: end of input")
-	return errs.Wrap(err, errs.ErrEOF, "could not read configuration file")
+func loadConfig() error {
+	err := decodeConfig()
+	return errs.Wrap(err, ConfigurationNotValid, "service configuration could not be loaded")
 }
 
 func decodeConfig() error {
@@ -135,9 +137,13 @@ func decodeConfig() error {
 	return errs.Wrap(err, errs.ErrInvalidJSON, "could not decode configuration data")
 }
 
-func loadConfig() error {
-	err := decodeConfig()
-	return errs.Wrap(err, errs.ErrFatal, "service configuration could not be loaded")
+func readConfig() error {
+	err := fmt.Errorf("read: end of input")
+	return errs.Wrap(err, errs.ErrEOF, "could not read configuration file")
+}
+
+func someWork() error {
+	return fmt.Errorf("failed to do work")
 }
 ```
 
