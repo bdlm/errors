@@ -211,7 +211,9 @@ Becase an error stack is just an array of errors iterating through it is trivial
 
 ```go
 for _, e := range err.(errs.Err) {
-	fmt.Println(e)
+	fmt.Println(e.Code())
+	fmt.Println(e.Error())
+	fmt.Println(e.Msg())
 }
 ```
 
