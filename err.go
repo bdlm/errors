@@ -92,6 +92,17 @@ func (errs Err) HTTPStatus() int {
 }
 
 /*
+Msg returns the error message.
+*/
+func (errs Err) Msg() string {
+	str := ""
+	if len(errs) > 0 {
+		str = errs[len(errs)-1].Msg()
+	}
+	return str
+}
+
+/*
 String implements the stringer and Coder interfaces.
 */
 func (errs Err) String() string {
@@ -240,7 +251,7 @@ func (errs Err) With(err error, msg string, data ...interface{}) Err {
 				err:    err,
 				caller: getCaller(),
 				code:   0,
-				msg:    fmt.Sprintf(msg, data...),
+				msg:    err.Error(),
 			}, msgs)
 		} else {
 			errs = append(errs, Msg{
