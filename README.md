@@ -215,7 +215,8 @@ for _, e := range err.(errs.Err) {
 	fmt.Println(e.Error())
 	fmt.Println(e.Msg())  // In the case of Wrap(), it is possible to suppliment
 	                      // an error with additional information, which is
-	                      // returned by Msg()
+	                      // returned by Msg(). Otherwise, Msg() returns the same
+	                      // string as Error().
 }
 ```
 
