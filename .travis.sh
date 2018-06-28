@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
-echo "" > coverage.txt
 
 rm -f coverage.txt
 for dir in $(go list ./...); do
