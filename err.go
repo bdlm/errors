@@ -63,7 +63,15 @@ Detail implements the Coder interface. Detail returns the single-line
 stack trace.
 */
 func (errs Err) Detail() string {
-	return fmt.Sprintf("%-v", errs)
+	if len(errs) > 0 {
+		if code, ok := Codes[errs.Code()]; ok {
+			if "" != code.Detail() {
+				return code.Detail()
+			}
+			return errs.Error()
+		}
+	}
+	return ""
 }
 
 /*
@@ -133,24 +141,24 @@ func (errs Err) Format(state fmt.State, verb rune) {
 		str := bytes.NewBuffer([]byte{})
 		for k := len(errs) - 1; k >= 0; k-- {
 			err := errs[k]
-			msg, ok := Codes[err.Code()]
+			code, ok := Codes[err.Code()]
 			if !ok {
-				msg = ErrCode{
+				code = ErrCode{
 					Int: err.Error(),
 					Ext: err.Error(),
 				}
 			}
 
 			errMsgInt := fmt.Sprintf("%04d", err.Code())
-			if "" != msg.Detail() {
-				errMsgInt = fmt.Sprintf("%s: %s", errMsgInt, msg.Detail())
+			if "" != code.Detail() {
+				errMsgInt = fmt.Sprintf("%s: %s", errMsgInt, code.Detail())
 			} else {
 				errMsgInt = fmt.Sprintf("%s: %s", errMsgInt, err.Error())
 			}
 
 			errMsgExt := fmt.Sprintf("%04d", err.Code())
-			if "" != msg.String() {
-				errMsgExt = fmt.Sprintf("%s: %s", errMsgExt, msg.String())
+			if "" != code.String() {
+				errMsgExt = fmt.Sprintf("%s: %s", errMsgExt, code.String())
 			} else {
 				errMsgExt = fmt.Sprintf("%s: %s", errMsgExt, err.Error())
 			}

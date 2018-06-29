@@ -17,6 +17,14 @@ const (
 	ConfigurationNotValid errs.Code = iota + 1000
 )
 
+func init() {
+	errs.Codes[ConfigurationNotValid] = errs.ErrCode{
+		"Configuration not valid",
+		"the configuration is invalid",
+		500,
+	}
+}
+
 func loadConfig() error {
 	err := decodeConfig()
 	return errs.Wrap(err, ConfigurationNotValid, "service configuration could not be loaded")
