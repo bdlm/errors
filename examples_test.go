@@ -24,7 +24,7 @@ func ExampleNew() {
 	err = errs.New(errs.ErrFatal, "this is an error message")
 	fmt.Println(err)
 
-	// Output: 0000: this is an error message
+	// Output: 0000: An unknown error occurred
 	//0001: Internal Server Error
 }
 
@@ -52,20 +52,20 @@ func ExampleWrap_backtrace() {
 	// human consumption.
 	fmt.Printf("%+v\n\n", err)
 
-	// Output: 0000: failed to load configuration
-	//#4 - "failed to load configuration" examples_test.go:36 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: unknown error} #3 - "service configuration could not be loaded" mocks_test.go:22 `github.com/bdlm/errors_test.loadConfig` {1000: service configuration could not be loaded} #2 - "could not decode configuration data" mocks_test.go:27 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #1 - "could not read configuration file" mocks_test.go:32 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF} #0 - "read: end of input" mocks_test.go:32 `github.com/bdlm/errors_test.readConfig` {0000: unknown error}
+	// Output: 0000: An unknown error occurred
+	//#4 - "failed to load configuration" examples_test.go:36 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: an unknown error occurred} #3 - "service configuration could not be loaded" mocks_test.go:22 `github.com/bdlm/errors_test.loadConfig` {1000: service configuration could not be loaded} #2 - "could not decode configuration data" mocks_test.go:27 `github.com/bdlm/errors_test.decodeConfig` {0208: could not decode configuration data} #1 - "could not read configuration file" mocks_test.go:32 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF} #0 - "read: end of input" mocks_test.go:32 `github.com/bdlm/errors_test.readConfig` {0000: an unknown error occurred}
 	//
-	//#4 - "failed to load configuration" examples_test.go:36 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: unknown error}
+	//#4 - "failed to load configuration" examples_test.go:36 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: an unknown error occurred}
 	//#3 - "service configuration could not be loaded" mocks_test.go:22 `github.com/bdlm/errors_test.loadConfig` {1000: service configuration could not be loaded}
-	//#2 - "could not decode configuration data" mocks_test.go:27 `github.com/bdlm/errors_test.decodeConfig` {0200: invalid JSON data could not be decoded}
+	//#2 - "could not decode configuration data" mocks_test.go:27 `github.com/bdlm/errors_test.decodeConfig` {0208: could not decode configuration data}
 	//#1 - "could not read configuration file" mocks_test.go:32 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
-	//#0 - "read: end of input" mocks_test.go:32 `github.com/bdlm/errors_test.readConfig` {0000: unknown error}
+	//#0 - "read: end of input" mocks_test.go:32 `github.com/bdlm/errors_test.readConfig` {0000: an unknown error occurred}
 	//
 	//#4: `github.com/bdlm/errors_test.ExampleWrap_backtrace`
 	//	error:   failed to load configuration
 	//	line:    examples_test.go:36
-	//	code:    0000: unknown error
-	//	message: 0000: failed to load configuration
+	//	code:    0000: an unknown error occurred
+	//	message: 0000: An unknown error occurred
 	//#3: `github.com/bdlm/errors_test.loadConfig`
 	//	error:   service configuration could not be loaded
 	//	line:    mocks_test.go:22
@@ -74,8 +74,8 @@ func ExampleWrap_backtrace() {
 	//#2: `github.com/bdlm/errors_test.decodeConfig`
 	//	error:   could not decode configuration data
 	//	line:    mocks_test.go:27
-	//	code:    0200: invalid JSON data could not be decoded
-	//	message: 0200: Invalid JSON Data
+	//	code:    0208: could not decode configuration data
+	//	message: 0208: could not decode configuration data
 	//#1: `github.com/bdlm/errors_test.readConfig`
 	//	error:   could not read configuration file
 	//	line:    mocks_test.go:32
@@ -84,8 +84,8 @@ func ExampleWrap_backtrace() {
 	//#0: `github.com/bdlm/errors_test.readConfig`
 	//	error:   read: end of input
 	//	line:    mocks_test.go:32
-	//	code:    0000: unknown error
-	//	message: 0000: read: end of input
+	//	code:    0000: an unknown error occurred
+	//	message: 0000: An unknown error occurred
 }
 
 func ExampleFrom() {
@@ -97,8 +97,9 @@ func ExampleFrom() {
 	}
 
 	fmt.Println(err)
+	fmt.Println(err.(errs.Err).Detail())
 
-	// Output: 0000: my error
+	// Output: 0000: An unknown error occurred
 }
 
 func ExampleErr_With() {

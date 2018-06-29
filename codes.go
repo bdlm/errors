@@ -39,6 +39,12 @@ const (
 	ErrEncodingToml
 	// ErrEncodingYaml - Yaml data could not be encoded.
 	ErrEncodingYaml
+	// ErrInvalidJSON - Data is not valid JSON.
+	ErrInvalidJSON
+	// ErrInvalidToml - Data is not valid Toml.
+	ErrInvalidToml
+	// ErrInvalidYaml - Data is not valid Yaml.
+	ErrInvalidYaml
 	// ErrTypeConversionFailed - Data type conversion failed.
 	ErrTypeConversionFailed
 )
@@ -53,7 +59,7 @@ const (
 
 func init() {
 	// Internal errors
-	Codes[ErrUnknown] = ErrCode{"An unknown error occurred", "an unknown error occurred", 0}
+	Codes[ErrUnknown] = ErrCode{"An unknown error occurred", "", 0}
 	Codes[ErrFatal] = ErrCode{"A fatal error occurred", "a fatal error occurred", 0}
 
 	// I/O errors
