@@ -65,7 +65,10 @@ stack trace.
 func (errs Err) Detail() string {
 	if len(errs) > 0 {
 		if code, ok := Codes[errs.Code()]; ok {
-			return code.Detail()
+			if "" != code.Detail() {
+				return code.Detail()
+			}
+			return errs.Error()
 		}
 	}
 	return ""
