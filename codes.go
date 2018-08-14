@@ -1,11 +1,15 @@
 package errors
 
+import (
+	std "github.com/bdlm/std/error"
+)
+
 /*
 Internal errors
 */
 const (
 	// ErrUnknown - 0: An unknown error occurred.
-	ErrUnknown Code = iota
+	ErrUnknown std.Code = iota
 	// ErrFatal - 1: An fatal error occurred.
 	ErrFatal
 )
@@ -15,7 +19,7 @@ I/O errors
 */
 const (
 	// ErrEOF - 100: An invalid HTTP method was requested.
-	ErrEOF Code = iota + 100
+	ErrEOF std.Code = iota + 100
 	ErrReader
 )
 
@@ -24,7 +28,7 @@ Encoding errors
 */
 const (
 	// ErrDecodingFailed - Decoding failed due to an error with the data.
-	ErrDecodingFailed Code = iota + 200
+	ErrDecodingFailed std.Code = iota + 200
 	// ErrDecodingJSON - JSON data could not be decoded.
 	ErrDecodingJSON
 	// ErrDecodingToml - Toml data could not be decoded.
@@ -54,7 +58,7 @@ Server errors
 */
 const (
 	// ErrInvalidHTTPMethod - 300: An invalid HTTP method was requested.
-	ErrInvalidHTTPMethod Code = iota + 300
+	ErrInvalidHTTPMethod std.Code = iota + 300
 )
 
 func init() {
@@ -99,7 +103,7 @@ type Code int
 /*
 Codes contains a map of error codes to metadata
 */
-var Codes = map[Code]Coder{}
+var Codes = map[std.Code]Coder{}
 
 /*
 ErrCode implements coder

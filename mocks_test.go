@@ -19,9 +19,9 @@ const (
 
 func init() {
 	errs.Codes[ConfigurationNotValid] = errs.ErrCode{
-		"Configuration not valid",
-		"the configuration is invalid",
-		500,
+		Ext:  "Configuration not valid",
+		Int:  "the configuration is invalid",
+		HTTP: 500,
 	}
 }
 
