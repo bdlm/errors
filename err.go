@@ -281,7 +281,7 @@ func (errs Err) With(err error, msg string, data ...interface{}) Err {
 /*
 Wrap wraps an error into a new stack led by msg.
 */
-func Wrap(err error, code Code, msg string, data ...interface{}) Err {
+func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
 	var errs Err
 
 	// Can't wrap a nil...

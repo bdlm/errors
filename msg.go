@@ -12,7 +12,7 @@ type ErrMsg interface {
 	Code() std.Code
 	Error() string
 	Msg() string
-	SetCode(Code) ErrMsg
+	SetCode(std.Code) ErrMsg
 	Trace() std.Trace
 }
 

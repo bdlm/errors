@@ -54,39 +54,39 @@ func ExampleWrap_backtrace() {
 	fmt.Printf("%+v\n\n", err)
 
 	// Output: 0000: An unknown error occurred
-	//#4 - "failed to load configuration" examples_test.go:37 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: failed to load configuration} #3 - "service configuration could not be loaded" mocks_test.go:30 `github.com/bdlm/errors_test.loadConfig` {1000: the configuration is invalid} #2 - "could not decode configuration data" mocks_test.go:35 `github.com/bdlm/errors_test.decodeConfig` {0208: could not decode configuration data} #1 - "could not read configuration file" mocks_test.go:40 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF} #0 - "read: end of input" mocks_test.go:40 `github.com/bdlm/errors_test.readConfig` {0000: read: end of input}
+	// #4 - "failed to load configuration" examples_test.go:37 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: failed to load configuration} #3 - "service configuration could not be loaded" mocks_test.go:31 `github.com/bdlm/errors_test.loadConfig` {1000: the configuration is invalid} #2 - "could not decode configuration data" mocks_test.go:36 `github.com/bdlm/errors_test.decodeConfig` {0208: could not decode configuration data} #1 - "could not read configuration file" mocks_test.go:41 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF} #0 - "read: end of input" mocks_test.go:41 `github.com/bdlm/errors_test.readConfig` {0000: read: end of input}
 	//
-	//#4 - "failed to load configuration" examples_test.go:37 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: failed to load configuration}
-	//#3 - "service configuration could not be loaded" mocks_test.go:30 `github.com/bdlm/errors_test.loadConfig` {1000: the configuration is invalid}
-	//#2 - "could not decode configuration data" mocks_test.go:35 `github.com/bdlm/errors_test.decodeConfig` {0208: could not decode configuration data}
-	//#1 - "could not read configuration file" mocks_test.go:40 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
-	//#0 - "read: end of input" mocks_test.go:40 `github.com/bdlm/errors_test.readConfig` {0000: read: end of input}
+	// #4 - "failed to load configuration" examples_test.go:37 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: failed to load configuration}
+	// #3 - "service configuration could not be loaded" mocks_test.go:31 `github.com/bdlm/errors_test.loadConfig` {1000: the configuration is invalid}
+	// #2 - "could not decode configuration data" mocks_test.go:36 `github.com/bdlm/errors_test.decodeConfig` {0208: could not decode configuration data}
+	// #1 - "could not read configuration file" mocks_test.go:41 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
+	// #0 - "read: end of input" mocks_test.go:41 `github.com/bdlm/errors_test.readConfig` {0000: read: end of input}
 	//
-	//#4: `github.com/bdlm/errors_test.ExampleWrap_backtrace`
-	//	error:   failed to load configuration
-	//	line:    examples_test.go:37
-	//	code:    0000: failed to load configuration
-	//	message: 0000: An unknown error occurred
-	//#3: `github.com/bdlm/errors_test.loadConfig`
-	//	error:   service configuration could not be loaded
-	//	line:    mocks_test.go:30
-	//	code:    1000: the configuration is invalid
-	//	message: 1000: Configuration not valid
-	//#2: `github.com/bdlm/errors_test.decodeConfig`
-	//	error:   could not decode configuration data
-	//	line:    mocks_test.go:35
-	//	code:    0208: could not decode configuration data
-	//	message: 0208: could not decode configuration data
-	//#1: `github.com/bdlm/errors_test.readConfig`
-	//	error:   could not read configuration file
-	//	line:    mocks_test.go:40
-	//	code:    0100: unexpected EOF
-	//	message: 0100: End of input
-	//#0: `github.com/bdlm/errors_test.readConfig`
-	//	error:   read: end of input
-	//	line:    mocks_test.go:40
-	//	code:    0000: read: end of input
-	//	message: 0000: An unknown error occurred
+	// #4: `github.com/bdlm/errors_test.ExampleWrap_backtrace`
+	// 	error:   failed to load configuration
+	// 	line:    examples_test.go:37
+	// 	code:    0000: failed to load configuration
+	// 	message: 0000: An unknown error occurred
+	// #3: `github.com/bdlm/errors_test.loadConfig`
+	// 	error:   service configuration could not be loaded
+	// 	line:    mocks_test.go:31
+	// 	code:    1000: the configuration is invalid
+	// 	message: 1000: Configuration not valid
+	// #2: `github.com/bdlm/errors_test.decodeConfig`
+	// 	error:   could not decode configuration data
+	// 	line:    mocks_test.go:36
+	// 	code:    0208: could not decode configuration data
+	// 	message: 0208: could not decode configuration data
+	// #1: `github.com/bdlm/errors_test.readConfig`
+	// 	error:   could not read configuration file
+	// 	line:    mocks_test.go:41
+	// 	code:    0100: unexpected EOF
+	// 	message: 0100: End of input
+	// #0: `github.com/bdlm/errors_test.readConfig`
+	// 	error:   read: end of input
+	// 	line:    mocks_test.go:41
+	// 	code:    0000: read: end of input
+	// 	message: 0000: An unknown error occurred
 }
 
 func ExampleFrom() {

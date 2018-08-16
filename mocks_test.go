@@ -9,12 +9,13 @@ import (
 	"fmt"
 
 	errs "github.com/bdlm/errors"
+	std "github.com/bdlm/std/error"
 )
 
 const (
 	// Error codes below 1000 are reserved future use by the
 	// "github.com/bdlm/errors" package.
-	ConfigurationNotValid errs.Code = iota + 1000
+	ConfigurationNotValid std.Code = iota + 1000
 )
 
 func init() {
