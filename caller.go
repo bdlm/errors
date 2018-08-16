@@ -3,21 +3,13 @@ package errors
 import (
 	"fmt"
 	"runtime"
+	"strings"
+
+	std "github.com/bdlm/std/error"
 )
 
 /*
-Caller defines an interface to runtime caller results.
-*/
-type Caller interface {
-	File() string
-	Line() int
-	Ok() bool
-	Pc() uintptr
-	String() string
-}
-
-/*
-Call holds runtime.Caller data
+Call implements bdlm/std/error.Caller, holding runtime.Caller data.
 */
 type Call struct {
 	loaded bool
@@ -28,28 +20,29 @@ type Call struct {
 }
 
 /*
-File returns the caller file name.
+File implements bdlm/std/error.Caller, returning the caller file name.
 */
 func (call Call) File() string {
 	return call.file
 }
 
 /*
-Line returns the caller line number.
+Line implements bdlm/std/error.Caller, returning the caller line number.
 */
 func (call Call) Line() int {
 	return call.line
 }
 
 /*
-Ok returns whether the caller data was successfully recovered.
+Ok implements bdlm/std/error.Caller, returning whether the caller data was
+successfully recovered.
 */
 func (call Call) Ok() bool {
 	return call.ok
 }
 
 /*
-Pc returns the caller program counter.
+Pc implements bdlm/std/error.Caller, returning the caller program counter.
 */
 func (call Call) Pc() uintptr {
 	return call.pc
@@ -67,8 +60,34 @@ func (call Call) String() string {
 	)
 }
 
-func getCaller() Caller {
-	call := Call{}
-	call.pc, call.file, call.line, call.ok = runtime.Caller(2)
-	return call
+func getCaller() std.Caller {
+	var caller Call
+	a := 0
+	for {
+		if caller.pc, caller.file, caller.line, caller.ok = runtime.Caller(a); caller.ok {
+			if !strings.Contains(strings.ToLower(caller.file), "github.com/bdlm/errors") ||
+				strings.HasSuffix(strings.ToLower(caller.file), "_test.go") {
+				break
+			}
+		} else {
+			break
+		}
+		a++
+	}
+	return caller
+}
+
+func getTrace() std.Trace {
+	var trace std.Trace
+	var caller Call
+	a := 0
+	for {
+		if caller.pc, caller.file, caller.line, caller.ok = runtime.Caller(a); caller.ok {
+			trace = append(trace, caller)
+		} else {
+			break
+		}
+		a++
+	}
+	return trace
 }

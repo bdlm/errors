@@ -7,6 +7,8 @@ import (
 	"path"
 	"runtime"
 	"strings"
+
+	std "github.com/bdlm/std/error"
 )
 
 /*
@@ -17,20 +19,21 @@ type Err []ErrMsg
 /*
 New returns an error with caller information for debugging.
 */
-func New(code Code, msg string, data ...interface{}) Err {
+func New(code std.Code, msg string, data ...interface{}) Err {
 	return Err{Msg{
 		err:    fmt.Errorf(msg, data...),
 		caller: getCaller(),
 		code:   code,
 		msg:    msg,
+		trace:  getTrace(),
 	}}
 }
 
 /*
-Callers returns the call stack.
+Trace returns the call stack.
 */
-func (errs Err) Callers() []Caller {
-	callers := []Caller{}
+func (errs Err) Trace() std.Trace {
+	var callers std.Trace
 	for _, msg := range errs {
 		callers = append(callers, msg.Caller())
 	}
@@ -50,7 +53,7 @@ func (errs Err) Cause() error {
 /*
 Code returns the most recent error code.
 */
-func (errs Err) Code() Code {
+func (errs Err) Code() std.Code {
 	code := ErrUnknown
 	if len(errs) > 0 {
 		code = errs[len(errs)-1].Code()
@@ -210,7 +213,7 @@ func (errs Err) Format(state fmt.State, verb rune) {
 /*
 From creates a new error stack based on a provided error and returns it.
 */
-func From(code Code, err error) Err {
+func From(code std.Code, err error) Err {
 	if e, ok := err.(Err); ok {
 		e[len(e)-1].SetCode(code)
 		err = e
@@ -278,7 +281,7 @@ func (errs Err) With(err error, msg string, data ...interface{}) Err {
 /*
 Wrap wraps an error into a new stack led by msg.
 */
-func Wrap(err error, code Code, msg string, data ...interface{}) Err {
+func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
 	var errs Err
 
 	// Can't wrap a nil...
