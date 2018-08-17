@@ -30,14 +30,14 @@ func New(code std.Code, msg string, data ...interface{}) Err {
 }
 
 /*
-Trace returns the call stack.
+Caller returns the most recent error caller.
 */
-func (errs Err) Trace() std.Trace {
-	var callers std.Trace
-	for _, msg := range errs {
-		callers = append(callers, msg.Caller())
+func (errs Err) Caller() std.Caller {
+	var caller std.Caller
+	if len(errs) > 0 {
+		caller = errs[len(errs)-1].Caller()
 	}
-	return callers
+	return caller
 }
 
 /*
@@ -86,38 +86,6 @@ func (errs Err) Error() string {
 		str = errs[len(errs)-1].Error()
 	}
 	return str
-}
-
-/*
-HTTPStatus returns the associated HTTP status code, if any. Otherwise,
-returns 200.
-*/
-func (errs Err) HTTPStatus() int {
-	status := http.StatusOK
-	if len(errs) > 0 {
-		if code, ok := Codes[errs[len(errs)-1].Code()]; ok {
-			status = code.HTTPStatus()
-		}
-	}
-	return status
-}
-
-/*
-Msg returns the error message.
-*/
-func (errs Err) Msg() string {
-	str := ""
-	if len(errs) > 0 {
-		str = errs[len(errs)-1].Msg()
-	}
-	return str
-}
-
-/*
-String implements the stringer and Coder interfaces.
-*/
-func (errs Err) String() string {
-	return fmt.Sprintf("%s", errs)
 }
 
 /*
@@ -226,6 +194,49 @@ func From(code std.Code, err error) Err {
 		}}
 	}
 	return err.(Err)
+}
+
+/*
+HTTPStatus returns the associated HTTP status code, if any. Otherwise,
+returns 200.
+*/
+func (errs Err) HTTPStatus() int {
+	status := http.StatusOK
+	if len(errs) > 0 {
+		if code, ok := Codes[errs[len(errs)-1].Code()]; ok {
+			status = code.HTTPStatus()
+		}
+	}
+	return status
+}
+
+/*
+Msg returns the error message.
+*/
+func (errs Err) Msg() string {
+	str := ""
+	if len(errs) > 0 {
+		str = errs[len(errs)-1].Msg()
+	}
+	return str
+}
+
+/*
+String implements the stringer and Coder interfaces.
+*/
+func (errs Err) String() string {
+	return fmt.Sprintf("%s", errs)
+}
+
+/*
+Trace returns the call stack.
+*/
+func (errs Err) Trace() std.Trace {
+	var callers std.Trace
+	for _, msg := range errs {
+		callers = append(callers, msg.Caller())
+	}
+	return callers
 }
 
 /*
