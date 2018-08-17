@@ -225,7 +225,7 @@ func (errs Err) Msg() string {
 String implements the stringer and Coder interfaces.
 */
 func (errs Err) String() string {
-	return fmt.Sprintf("%s", errs)
+	return fmt.Sprintf("%v", errs)
 }
 
 /*
