@@ -322,6 +322,8 @@ func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
 		return New(code, msg)
 	}
 
+	errs.mux.Lock()
+	defer errs.mux.Unlock()
 	if e, ok := err.(Err); ok {
 		errs.errs = append(errs.errs, e.errs...)
 	} else if e, ok := err.(Msg); ok {
