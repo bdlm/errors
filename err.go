@@ -51,8 +51,6 @@ func (err Err) Caller() std.Caller {
 Cause returns the root cause of an error stack.
 */
 func (err Err) Cause() error {
-	err.mux.Lock()
-	defer err.mux.Unlock()
 	if len(err.errs) > 0 {
 		return err.errs[0]
 	}
@@ -268,7 +266,6 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 	}
 
 	err.mux.Lock()
-	defer err.mux.Unlock()
 	if 0 == len(err.errs) {
 		err.errs = append(err.errs, Msg{
 			err:    e,
@@ -304,7 +301,18 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 		}
 		err.errs = append(err.errs, top)
 	}
+	err.mux.Unlock()
 
+	return err
+}
+
+/*
+Push append an ErrMsg to the lst.
+*/
+func (err Err) Push(e ...ErrMsg) Err {
+	err.mux.Lock()
+	err.errs = append(err.errs, e...)
+	err.mux.Unlock()
 	return err
 }
 
@@ -323,15 +331,10 @@ func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
 	}
 
 	if e, ok := err.(Err); ok {
-		errs.mux.Lock()
-		errs.errs = append(errs.errs, e.errs...)
-		errs.mux.Unlock()
+		errs = errs.Push(e.errs...)
 	} else if e, ok := err.(Msg); ok {
-		errs.mux.Lock()
-		errs.errs = append(errs.errs, e)
-		errs.mux.Unlock()
+		errs = errs.Push(e)
 	} else {
-		errs.mux.Lock()
 		errs = Err{
 			errs: []ErrMsg{Msg{
 				err:    err,
@@ -341,17 +344,14 @@ func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
 			}},
 			mux: &sync.Mutex{},
 		}
-		errs.mux.Unlock()
 	}
 
-	errs.mux.Lock()
-	errs.errs = append(errs.errs, Msg{
+	errs = errs.Push(Msg{
 		err:    fmt.Errorf(msg, data...),
 		caller: getCaller(),
 		code:   code,
 		msg:    msg,
 	})
-	errs.mux.Unlock()
 
 	return errs
 }
