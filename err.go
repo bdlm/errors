@@ -23,8 +23,8 @@ type Err struct {
 /*
 New returns an error with caller information for debugging.
 */
-func New(code std.Code, msg string, data ...interface{}) *Err {
-	return &Err{
+func New(code std.Code, msg string, data ...interface{}) Err {
+	return Err{
 		errs: []ErrMsg{Msg{
 			err:    fmt.Errorf(msg, data...),
 			caller: getCaller(),
@@ -39,7 +39,7 @@ func New(code std.Code, msg string, data ...interface{}) *Err {
 /*
 Caller returns the most recent error caller.
 */
-func (err *Err) Caller() std.Caller {
+func (err Err) Caller() std.Caller {
 	var caller std.Caller
 	if len(err.errs) > 0 {
 		caller = err.errs[len(err.errs)-1].Caller()
@@ -50,7 +50,7 @@ func (err *Err) Caller() std.Caller {
 /*
 Cause returns the root cause of an error stack.
 */
-func (err *Err) Cause() error {
+func (err Err) Cause() error {
 	err.mux.Lock()
 	defer err.mux.Unlock()
 	if len(err.errs) > 0 {
@@ -62,7 +62,7 @@ func (err *Err) Cause() error {
 /*
 Code returns the most recent error code.
 */
-func (err *Err) Code() std.Code {
+func (err Err) Code() std.Code {
 	code := ErrUnknown
 	if len(err.errs) > 0 {
 		code = err.errs[len(err.errs)-1].Code()
@@ -74,7 +74,7 @@ func (err *Err) Code() std.Code {
 Detail implements the Coder interface. Detail returns the single-line
 stack trace.
 */
-func (err *Err) Detail() string {
+func (err Err) Detail() string {
 	if len(err.errs) > 0 {
 		if code, ok := Codes[err.Code()]; ok {
 			if "" != code.Detail() {
@@ -89,7 +89,7 @@ func (err *Err) Detail() string {
 /*
 Error implements the error interface.
 */
-func (err *Err) Error() string {
+func (err Err) Error() string {
 	str := ""
 	if len(err.errs) > 0 {
 		str = err.errs[len(err.errs)-1].Error()
@@ -115,7 +115,7 @@ Format formats the stack trace output. Several verbs are supported:
 	%+v - Returns a multi-line detailed stack trace with multiple lines
 	      per error. Only useful for human consumption.
 */
-func (err *Err) Format(state fmt.State, verb rune) {
+func (err Err) Format(state fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		str := bytes.NewBuffer([]byte{})
@@ -190,8 +190,8 @@ func (err *Err) Format(state fmt.State, verb rune) {
 /*
 From creates a new error stack based on a provided error and returns it.
 */
-func From(code std.Code, err error) *Err {
-	if e, ok := err.(*Err); ok {
+func From(code std.Code, err error) Err {
+	if e, ok := err.(Err); ok {
 		e.errs[len(e.errs)-1].SetCode(code)
 		err = e
 	} else {
@@ -205,14 +205,14 @@ func From(code std.Code, err error) *Err {
 			mux: &sync.Mutex{},
 		}
 	}
-	return err.(*Err)
+	return err.(Err)
 }
 
 /*
 HTTPStatus returns the associated HTTP status code, if any. Otherwise,
 returns 200.
 */
-func (err *Err) HTTPStatus() int {
+func (err Err) HTTPStatus() int {
 	status := http.StatusOK
 	if len(err.errs) > 0 {
 		if code, ok := Codes[err.errs[len(err.errs)-1].Code()]; ok {
@@ -225,14 +225,14 @@ func (err *Err) HTTPStatus() int {
 /*
 Len returns the size of the error stack.
 */
-func (err *Err) Len() int {
+func (err Err) Len() int {
 	return len(err.errs)
 }
 
 /*
 Msg returns the error message.
 */
-func (err *Err) Msg() string {
+func (err Err) Msg() string {
 	str := ""
 	if len(err.errs) > 0 {
 		str = err.errs[len(err.errs)-1].Msg()
@@ -243,14 +243,14 @@ func (err *Err) Msg() string {
 /*
 String implements the stringer and Coder interfaces.
 */
-func (err *Err) String() string {
+func (err Err) String() string {
 	return fmt.Sprintf("%s", err)
 }
 
 /*
 Trace returns the call stack.
 */
-func (err *Err) Trace() std.Trace {
+func (err Err) Trace() std.Trace {
 	var callers std.Trace
 	for _, msg := range err.errs {
 		callers = append(callers, msg.Caller())
@@ -261,7 +261,7 @@ func (err *Err) Trace() std.Trace {
 /*
 With adds a new error to the stack without changing the leading cause.
 */
-func (err *Err) With(e error, msg string, data ...interface{}) *Err {
+func (err Err) With(e error, msg string, data ...interface{}) Err {
 	// Can't include a nil...
 	if nil == e {
 		return err
@@ -282,7 +282,7 @@ func (err *Err) With(e error, msg string, data ...interface{}) *Err {
 		fmt.Println("got here 12")
 		top := err.errs[len(err.errs)-1]
 		err.errs = err.errs[:len(err.errs)-1]
-		if msgs, ok := e.(*Err); ok {
+		if msgs, ok := e.(Err); ok {
 			fmt.Println("got here 13")
 			err.errs = append(err.errs, Msg{
 				err:    fmt.Errorf(msg, data...),
@@ -319,20 +319,20 @@ func (err *Err) With(e error, msg string, data ...interface{}) *Err {
 /*
 Wrap wraps an error into a new stack led by msg.
 */
-func Wrap(err error, code std.Code, msg string, data ...interface{}) *Err {
-	var errs *Err
+func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
+	var errs Err
 
 	// Can't wrap a nil...
 	if nil == err {
 		return New(code, msg)
 	}
 
-	if e, ok := err.(*Err); ok {
+	if e, ok := err.(Err); ok {
 		errs.errs = append(errs.errs, e.errs...)
 	} else if e, ok := err.(Msg); ok {
 		errs.errs = append(errs.errs, e)
 	} else {
-		errs = &Err{
+		errs = Err{
 			errs: []ErrMsg{Msg{
 				err:    err,
 				caller: getCaller(),
