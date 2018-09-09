@@ -13,7 +13,7 @@ func TestMsg(t *testing.T) {
 		t.Errorf("Expected '%s', received '%s'", err.Error(), err.Msg())
 	}
 
-	err = &Err{mux: &sync.Mutex{}}
+	err = Err{mux: &sync.Mutex{}}
 	err = err.With(errors.New("error 1"), "msg 1")
 	if "error 1" != err.Error() {
 		t.Errorf("Expected 'error 1', received %s", err.Error())
@@ -24,32 +24,24 @@ func TestMsg(t *testing.T) {
 }
 
 func TestWith(t *testing.T) {
-	fmt.Println("got here 1")
 	// Can't wrap a nil
 	err := New(0, "new")
-	fmt.Println("got here 2")
 	err2 := err.With(nil, "with")
-	fmt.Println("got here 3")
 	if fmt.Sprintf("%+v", err) != fmt.Sprintf("%+v", err2) {
 		t.Errorf("Expected %v, received %v", fmt.Sprintf("%+v", err), fmt.Sprintf("%+v", err2))
 	}
 
 	// Wrapping with an empty stack makes the error the leading causer
-	err = &Err{mux: &sync.Mutex{}}
-	fmt.Println("got here 4")
+	err = Err{mux: &sync.Mutex{}}
 	err = err.With(errors.New("error 1"), "msg 1")
-	fmt.Println("got here 5")
 	if 1 != len(err.errs) {
 		t.Errorf("Expected 1, received %d", len(err.errs))
 	}
 
 	// Wrapping with a non-empty stack inserts the error after leading
 	// causer
-	fmt.Println("got here 6")
 	err = err.With(errors.New("error 2"), "msg 2")
-	fmt.Println("got here 7")
 	err = err.With(errors.New("error 3"), "msg 3")
-	fmt.Println("got here 8")
 	if 3 != len(err.errs) {
 		t.Errorf("Expected 3, received %d", len(err.errs))
 	}
@@ -77,7 +69,7 @@ func TestWith(t *testing.T) {
 	}
 
 	// Wrapping an individual Msg creates two stack entries
-	err = &Err{mux: &sync.Mutex{}}
+	err = Err{mux: &sync.Mutex{}}
 	msg := Msg{
 		err:    nil,
 		caller: getCaller(),
@@ -85,7 +77,6 @@ func TestWith(t *testing.T) {
 		msg:    "msg 2",
 	}
 	err = err.With(errors.New("error 1"), "msg 1")
-	fmt.Println("got here 9")
 	err = err.With(msg, "msg 1")
 	if 3 != len(err.errs) {
 		t.Errorf("Expected 3, received %d", len(err.errs))

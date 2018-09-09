@@ -93,12 +93,12 @@ func ExampleFrom() {
 	// Converting an error from another package into an error stack is
 	// straightforward.
 	err := errors.New("my error")
-	if _, ok := err.(*errs.Err); !ok {
+	if _, ok := err.(errs.Err); !ok {
 		err = errs.From(0, err)
 	}
 
 	fmt.Println(err)
-	fmt.Println(err.(*errs.Err).Detail())
+	fmt.Println(err.(errs.Err).Detail())
 
 	// Output: 0000: An unknown error occurred
 	//my error
@@ -109,7 +109,7 @@ func ExampleErr_With() {
 	// additional errors to the stack with the With() method.
 	err := loadConfig()
 	if nil != err {
-		if e, ok := err.(*errs.Err); nil != err && ok {
+		if e, ok := err.(errs.Err); nil != err && ok {
 			err = e.With(errs.New(0, "failed to load configuration"), "loadConfig returned an error")
 		} else {
 			err = errs.From(0, err)
@@ -128,7 +128,7 @@ func ExampleDetail() {
 
 	// The single-line condensed stack trace is also availabe via the
 	// Detail() method
-	fmt.Println(err.(*errs.Err).Detail())
+	fmt.Println(err.(errs.Err).Detail())
 
 	// Output: failed to load configuration
 }
@@ -141,7 +141,7 @@ func ExampleHTTPStatus() {
 
 	// HTTPStatus() returns the HTTP status code associated with an error
 	// code, if any.
-	fmt.Println(err.(*errs.Err).HTTPStatus())
+	fmt.Println(err.(errs.Err).HTTPStatus())
 
 	// Output: 500
 }

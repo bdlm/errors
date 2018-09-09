@@ -195,7 +195,7 @@ func From(code std.Code, err error) Err {
 		e.errs[len(e.errs)-1].SetCode(code)
 		err = e
 	} else {
-		err = &Err{
+		err = Err{
 			errs: []ErrMsg{Msg{
 				err:    err,
 				caller: getCaller(),
@@ -269,9 +269,7 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 
 	err.mux.Lock()
 	defer err.mux.Unlock()
-	fmt.Println("got here 10")
 	if 0 == len(err.errs) {
-		fmt.Println("got here 11")
 		err.errs = append(err.errs, Msg{
 			err:    e,
 			caller: getCaller(),
@@ -279,11 +277,9 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 			msg:    fmt.Sprintf(msg, data...),
 		})
 	} else {
-		fmt.Println("got here 12")
 		top := err.errs[len(err.errs)-1]
 		err.errs = err.errs[:len(err.errs)-1]
 		if msgs, ok := e.(Err); ok {
-			fmt.Println("got here 13")
 			err.errs = append(err.errs, Msg{
 				err:    fmt.Errorf(msg, data...),
 				caller: getCaller(),
@@ -292,7 +288,6 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 			})
 			err.errs = append(err.errs, msgs.errs...)
 		} else if msgs, ok := e.(Msg); ok {
-			fmt.Println("got here 14")
 			err.errs = append(err.errs, Msg{
 				err:    fmt.Errorf(msg, data...),
 				caller: getCaller(),
@@ -300,7 +295,6 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 				msg:    err.Error(),
 			}, msgs)
 		} else {
-			fmt.Println("got here 15")
 			err.errs = append(err.errs, Msg{
 				err:    e,
 				caller: getCaller(),
@@ -308,11 +302,9 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 				msg:    fmt.Sprintf(msg, data...),
 			})
 		}
-		fmt.Println("got here 16")
 		err.errs = append(err.errs, top)
 	}
 
-	fmt.Println("got here 17")
 	return err
 }
 
@@ -320,7 +312,10 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 Wrap wraps an error into a new stack led by msg.
 */
 func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
-	var errs Err
+	var errs = Err{
+		errs: []ErrMsg{},
+		mux:  &sync.Mutex{},
+	}
 
 	// Can't wrap a nil...
 	if nil == err {
