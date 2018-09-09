@@ -265,9 +265,8 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 		return err
 	}
 
-	err.mux.Lock()
 	if 0 == len(err.errs) {
-		err.errs = append(err.errs, Msg{
+		err = err.Push(Msg{
 			err:    e,
 			caller: getCaller(),
 			code:   0,
@@ -277,31 +276,30 @@ func (err Err) With(e error, msg string, data ...interface{}) Err {
 		top := err.errs[len(err.errs)-1]
 		err.errs = err.errs[:len(err.errs)-1]
 		if msgs, ok := e.(Err); ok {
-			err.errs = append(err.errs, Msg{
+			err = err.Push(Msg{
 				err:    fmt.Errorf(msg, data...),
 				caller: getCaller(),
 				code:   0,
 				msg:    fmt.Sprintf(msg, data...),
 			})
-			err.errs = append(err.errs, msgs.errs...)
+			err = err.Push(msgs.errs...)
 		} else if msgs, ok := e.(Msg); ok {
-			err.errs = append(err.errs, Msg{
+			err = err.Push(Msg{
 				err:    fmt.Errorf(msg, data...),
 				caller: getCaller(),
 				code:   0,
 				msg:    err.Error(),
 			}, msgs)
 		} else {
-			err.errs = append(err.errs, Msg{
+			err = err.Push(Msg{
 				err:    e,
 				caller: getCaller(),
 				code:   0,
 				msg:    fmt.Sprintf(msg, data...),
 			})
 		}
-		err.errs = append(err.errs, top)
+		err = err.Push(top)
 	}
-	err.mux.Unlock()
 
 	return err
 }
