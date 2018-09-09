@@ -7,6 +7,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"sync"
 
 	std "github.com/bdlm/std/error"
 )
@@ -14,28 +15,34 @@ import (
 /*
 Err defines an error heap.
 */
-type Err []ErrMsg
+type Err struct {
+	errs []ErrMsg
+	mux  *sync.Mutex
+}
 
 /*
 New returns an error with caller information for debugging.
 */
-func New(code std.Code, msg string, data ...interface{}) Err {
-	return Err{Msg{
-		err:    fmt.Errorf(msg, data...),
-		caller: getCaller(),
-		code:   code,
-		msg:    msg,
-		trace:  getTrace(),
-	}}
+func New(code std.Code, msg string, data ...interface{}) *Err {
+	return &Err{
+		errs: []ErrMsg{Msg{
+			err:    fmt.Errorf(msg, data...),
+			caller: getCaller(),
+			code:   code,
+			msg:    msg,
+			trace:  getTrace(),
+		}},
+		mux: &sync.Mutex{},
+	}
 }
 
 /*
 Caller returns the most recent error caller.
 */
-func (errs Err) Caller() std.Caller {
+func (err *Err) Caller() std.Caller {
 	var caller std.Caller
-	if len(errs) > 0 {
-		caller = errs[len(errs)-1].Caller()
+	if len(err.errs) > 0 {
+		caller = err.errs[len(err.errs)-1].Caller()
 	}
 	return caller
 }
@@ -43,9 +50,11 @@ func (errs Err) Caller() std.Caller {
 /*
 Cause returns the root cause of an error stack.
 */
-func (errs Err) Cause() error {
-	if len(errs) > 0 {
-		return errs[0]
+func (err *Err) Cause() error {
+	err.mux.Lock()
+	defer err.mux.Unlock()
+	if len(err.errs) > 0 {
+		return err.errs[0]
 	}
 	return nil
 }
@@ -53,10 +62,10 @@ func (errs Err) Cause() error {
 /*
 Code returns the most recent error code.
 */
-func (errs Err) Code() std.Code {
+func (err *Err) Code() std.Code {
 	code := ErrUnknown
-	if len(errs) > 0 {
-		code = errs[len(errs)-1].Code()
+	if len(err.errs) > 0 {
+		code = err.errs[len(err.errs)-1].Code()
 	}
 	return code
 }
@@ -65,13 +74,13 @@ func (errs Err) Code() std.Code {
 Detail implements the Coder interface. Detail returns the single-line
 stack trace.
 */
-func (errs Err) Detail() string {
-	if len(errs) > 0 {
-		if code, ok := Codes[errs.Code()]; ok {
+func (err *Err) Detail() string {
+	if len(err.errs) > 0 {
+		if code, ok := Codes[err.Code()]; ok {
 			if "" != code.Detail() {
 				return code.Detail()
 			}
-			return errs.Error()
+			return err.Error()
 		}
 	}
 	return ""
@@ -80,10 +89,10 @@ func (errs Err) Detail() string {
 /*
 Error implements the error interface.
 */
-func (errs Err) Error() string {
+func (err *Err) Error() string {
 	str := ""
-	if len(errs) > 0 {
-		str = errs[len(errs)-1].Error()
+	if len(err.errs) > 0 {
+		str = err.errs[len(err.errs)-1].Error()
 	}
 	return str
 }
@@ -106,12 +115,12 @@ Format formats the stack trace output. Several verbs are supported:
 	%+v - Returns a multi-line detailed stack trace with multiple lines
 	      per error. Only useful for human consumption.
 */
-func (errs Err) Format(state fmt.State, verb rune) {
+func (err *Err) Format(state fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		str := bytes.NewBuffer([]byte{})
-		for k := len(errs) - 1; k >= 0; k-- {
-			err := errs[k]
+		for k := len(err.errs) - 1; k >= 0; k-- {
+			err := err.errs[k]
 			code, ok := Codes[err.Code()]
 			if !ok {
 				code = ErrCode{
@@ -174,36 +183,39 @@ func (errs Err) Format(state fmt.State, verb rune) {
 		fmt.Fprintf(state, "%s", strings.Trim(str.String(), " \n\t"))
 	default:
 		// Externally-safe error message
-		fmt.Fprintf(state, errs.Error())
+		fmt.Fprintf(state, err.Error())
 	}
 }
 
 /*
 From creates a new error stack based on a provided error and returns it.
 */
-func From(code std.Code, err error) Err {
-	if e, ok := err.(Err); ok {
-		e[len(e)-1].SetCode(code)
+func From(code std.Code, err error) *Err {
+	if e, ok := err.(*Err); ok {
+		e.errs[len(e.errs)-1].SetCode(code)
 		err = e
 	} else {
-		err = Err{Msg{
-			err:    err,
-			caller: getCaller(),
-			code:   code,
-			msg:    err.Error(),
-		}}
+		err = &Err{
+			errs: []ErrMsg{Msg{
+				err:    err,
+				caller: getCaller(),
+				code:   code,
+				msg:    err.Error(),
+			}},
+			mux: &sync.Mutex{},
+		}
 	}
-	return err.(Err)
+	return err.(*Err)
 }
 
 /*
 HTTPStatus returns the associated HTTP status code, if any. Otherwise,
 returns 200.
 */
-func (errs Err) HTTPStatus() int {
+func (err *Err) HTTPStatus() int {
 	status := http.StatusOK
-	if len(errs) > 0 {
-		if code, ok := Codes[errs[len(errs)-1].Code()]; ok {
+	if len(err.errs) > 0 {
+		if code, ok := Codes[err.errs[len(err.errs)-1].Code()]; ok {
 			status = code.HTTPStatus()
 		}
 	}
@@ -213,10 +225,10 @@ func (errs Err) HTTPStatus() int {
 /*
 Msg returns the error message.
 */
-func (errs Err) Msg() string {
+func (err *Err) Msg() string {
 	str := ""
-	if len(errs) > 0 {
-		str = errs[len(errs)-1].Msg()
+	if len(err.errs) > 0 {
+		str = err.errs[len(err.errs)-1].Msg()
 	}
 	return str
 }
@@ -224,16 +236,16 @@ func (errs Err) Msg() string {
 /*
 String implements the stringer and Coder interfaces.
 */
-func (errs Err) String() string {
-	return fmt.Sprintf("%s", errs)
+func (err *Err) String() string {
+	return fmt.Sprintf("%s", err)
 }
 
 /*
 Trace returns the call stack.
 */
-func (errs Err) Trace() std.Trace {
+func (err *Err) Trace() std.Trace {
 	var callers std.Trace
-	for _, msg := range errs {
+	for _, msg := range err.errs {
 		callers = append(callers, msg.Caller())
 	}
 	return callers
@@ -242,78 +254,89 @@ func (errs Err) Trace() std.Trace {
 /*
 With adds a new error to the stack without changing the leading cause.
 */
-func (errs Err) With(err error, msg string, data ...interface{}) Err {
+func (err *Err) With(e error, msg string, data ...interface{}) *Err {
 	// Can't include a nil...
-	if nil == err {
-		return errs
+	if nil == e {
+		return err
 	}
 
-	if 0 == len(errs) {
-		errs = append(errs, Msg{
-			err:    err,
+	err.mux.Lock()
+	defer err.mux.Unlock()
+	fmt.Println("got here 10")
+	if 0 == len(err.errs) {
+		fmt.Println("got here 11")
+		err.errs = append(err.errs, Msg{
+			err:    e,
 			caller: getCaller(),
 			code:   0,
 			msg:    fmt.Sprintf(msg, data...),
 		})
 	} else {
-		top := errs[len(errs)-1]
-		errs = errs[:len(errs)-1]
-		if msgs, ok := err.(Err); ok {
-			err := fmt.Errorf(msg, data...)
-			errs = append(errs, Msg{
-				err:    err,
+		fmt.Println("got here 12")
+		top := err.errs[len(err.errs)-1]
+		err.errs = err.errs[:len(err.errs)-1]
+		if msgs, ok := e.(*Err); ok {
+			fmt.Println("got here 13")
+			err.errs = append(err.errs, Msg{
+				err:    fmt.Errorf(msg, data...),
 				caller: getCaller(),
 				code:   0,
 				msg:    fmt.Sprintf(msg, data...),
 			})
-			errs = append(errs, msgs...)
-		} else if msgs, ok := err.(Msg); ok {
-			err := fmt.Errorf(msg, data...)
-			errs = append(errs, Msg{
-				err:    err,
+			err.errs = append(err.errs, msgs.errs...)
+		} else if msgs, ok := e.(Msg); ok {
+			fmt.Println("got here 14")
+			err.errs = append(err.errs, Msg{
+				err:    fmt.Errorf(msg, data...),
 				caller: getCaller(),
 				code:   0,
 				msg:    err.Error(),
 			}, msgs)
 		} else {
-			errs = append(errs, Msg{
-				err:    err,
+			fmt.Println("got here 15")
+			err.errs = append(err.errs, Msg{
+				err:    e,
 				caller: getCaller(),
 				code:   0,
 				msg:    fmt.Sprintf(msg, data...),
 			})
 		}
-		errs = append(errs, top)
+		fmt.Println("got here 16")
+		err.errs = append(err.errs, top)
 	}
 
-	return errs
+	fmt.Println("got here 17")
+	return err
 }
 
 /*
 Wrap wraps an error into a new stack led by msg.
 */
-func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
-	var errs Err
+func Wrap(err error, code std.Code, msg string, data ...interface{}) *Err {
+	var errs *Err
 
 	// Can't wrap a nil...
 	if nil == err {
 		return New(code, msg)
 	}
 
-	if e, ok := err.(Err); ok {
-		errs = append(errs, e...)
+	if e, ok := err.(*Err); ok {
+		errs.errs = append(errs.errs, e.errs...)
 	} else if e, ok := err.(Msg); ok {
-		errs = append(errs, e)
+		errs.errs = append(errs.errs, e)
 	} else {
-		errs = Err{Msg{
-			err:    err,
-			caller: getCaller(),
-			code:   0,
-			msg:    err.Error(),
-		}}
+		errs = &Err{
+			errs: []ErrMsg{Msg{
+				err:    err,
+				caller: getCaller(),
+				code:   0,
+				msg:    err.Error(),
+			}},
+			mux: &sync.Mutex{},
+		}
 	}
 
-	errs = append(errs, Msg{
+	errs.errs = append(errs.errs, Msg{
 		err:    fmt.Errorf(msg, data...),
 		caller: getCaller(),
 		code:   code,
