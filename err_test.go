@@ -13,7 +13,7 @@ func TestMsg(t *testing.T) {
 		t.Errorf("Expected '%s', received '%s'", err.Error(), err.Msg())
 	}
 
-	err = Err{mux: &sync.Mutex{}}
+	err = &Err{mux: &sync.Mutex{}}
 	err = err.With(errors.New("error 1"), "msg 1")
 	if "error 1" != err.Error() {
 		t.Errorf("Expected 'error 1', received %s", err.Error())
@@ -32,7 +32,7 @@ func TestWith(t *testing.T) {
 	}
 
 	// Wrapping with an empty stack makes the error the leading causer
-	err = Err{mux: &sync.Mutex{}}
+	err = &Err{mux: &sync.Mutex{}}
 	err = err.With(errors.New("error 1"), "msg 1")
 	if 1 != len(err.errs) {
 		t.Errorf("Expected 1, received %d", len(err.errs))
@@ -69,7 +69,7 @@ func TestWith(t *testing.T) {
 	}
 
 	// Wrapping an individual Msg creates two stack entries
-	err = Err{mux: &sync.Mutex{}}
+	err = &Err{mux: &sync.Mutex{}}
 	msg := Msg{
 		err:    nil,
 		caller: getCaller(),
