@@ -322,13 +322,16 @@ func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
 		return New(code, msg)
 	}
 
-	errs.mux.Lock()
-	defer errs.mux.Unlock()
 	if e, ok := err.(Err); ok {
+		errs.mux.Lock()
 		errs.errs = append(errs.errs, e.errs...)
+		errs.mux.Unlock()
 	} else if e, ok := err.(Msg); ok {
+		errs.mux.Lock()
 		errs.errs = append(errs.errs, e)
+		errs.mux.Unlock()
 	} else {
+		errs.mux.Lock()
 		errs = Err{
 			errs: []ErrMsg{Msg{
 				err:    err,
@@ -338,14 +341,17 @@ func Wrap(err error, code std.Code, msg string, data ...interface{}) Err {
 			}},
 			mux: &sync.Mutex{},
 		}
+		errs.mux.Unlock()
 	}
 
+	errs.mux.Lock()
 	errs.errs = append(errs.errs, Msg{
 		err:    fmt.Errorf(msg, data...),
 		caller: getCaller(),
 		code:   code,
 		msg:    msg,
 	})
+	errs.mux.Unlock()
 
 	return errs
 }
