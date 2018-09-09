@@ -223,6 +223,13 @@ func (err *Err) HTTPStatus() int {
 }
 
 /*
+Len returns the size of the error stack.
+*/
+func (err *Err) Len() int {
+	return len(err.errs)
+}
+
+/*
 Msg returns the error message.
 */
 func (err *Err) Msg() string {
