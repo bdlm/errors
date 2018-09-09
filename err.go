@@ -280,7 +280,7 @@ func (err *Err) Push(e ...ErrMsg) *Err {
 String implements the stringer and Coder interfaces.
 */
 func (err *Err) String() string {
-	return fmt.Sprintf("%s", err)
+	return fmt.Sprintf("%v", err)
 }
 
 /*
