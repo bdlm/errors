@@ -29,7 +29,7 @@ func New(code std.Code, msg string, data ...interface{}) *Err {
 			err:    fmt.Errorf(msg, data...),
 			caller: getCaller(),
 			code:   code,
-			msg:    msg,
+			msg:    fmt.Sprintf(msg, data...),
 			trace:  getTrace(),
 		}},
 		mux: &sync.Mutex{},
@@ -383,7 +383,7 @@ func Wrap(err error, code std.Code, msg string, data ...interface{}) *Err {
 		err:    fmt.Errorf(msg, data...),
 		caller: getCaller(),
 		code:   code,
-		msg:    msg,
+		msg:    fmt.Sprintf(msg, data...),
 	})
 
 	return errs
