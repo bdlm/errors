@@ -30,5 +30,5 @@ func (err Error) String() string {
 
 // Trace implements Err.
 func (err Error) Trace() []Caller {
-	return err.Caller().Trace()
+	return err.Caller().trace
 }

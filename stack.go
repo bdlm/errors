@@ -2,12 +2,19 @@ package errors
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"path"
 	"runtime"
 	"strings"
 	"sync"
 )
+
+// Stack represents an error stack.
+type Stack struct {
+	stack []Error
+	mux   *sync.Mutex
+}
 
 // newStack returns a new error stack.
 func newStack(msg string, data ...interface{}) Stack {
@@ -33,11 +40,6 @@ func newStackFromErr(err error) Stack {
 		},
 		mux: &sync.Mutex{},
 	}
-}
-
-type Stack struct {
-	stack []Error
-	mux   *sync.Mutex
 }
 
 // last returns the last error appended to the stack.
@@ -83,14 +85,14 @@ func (err Stack) Error() string {
 //
 //  %v  - Alias for %s
 //
-//  %#v - Returns the full call stack trace in a single line, useful for
+//  %-v - Returns the full call stack trace in a single line, useful for
 //        logging. Same as %#v with the newlines escaped.
-//
-//  %-v - Returns a multi-line call stack trace, one column-delimited line
-//        per error. Useful for development.
 //
 //  %+v - Returns a multi-line call stack trace including the full trace of
 //        each addition to the call stack. Useful for development.
+//
+//  %#v - Returns a full call stack trace as a JSON object, useful for
+//        logging.
 func (err Stack) Format(state fmt.State, verb rune) {
 	switch verb {
 	case 'v':
@@ -99,47 +101,72 @@ func (err Stack) Format(state fmt.State, verb rune) {
 		err.mux.Lock()
 		defer err.mux.Unlock()
 
-		for a := len(err.stack) - 1; a >= 0; a-- {
-			e := err.stack[a]
+		if state.Flag('#') {
+			byts, _ := json.Marshal(err)
+			fmt.Fprintf(str, string(byts))
 
-			switch {
-			case state.Flag('+'):
-				// Extended stack trace
-				fmt.Fprintf(str, "#%d: `%s`\n", a, runtime.FuncForPC(e.Caller().Pc()).Name())
-				fmt.Fprintf(str, "\terror:   %s\n", e.Error())
-				fmt.Fprintf(str, "\tline:    %s:%d\n", path.Base(e.Caller().File()), e.Caller().Line())
+		} else {
+			for a := len(err.stack) - 1; a >= 0; a-- {
+				e := err.stack[a]
 
-			case state.Flag('#'):
-				// Condensed stack trace
-				fmt.Fprintf(str, "#%d - \"%s\" %s:%d (%s)\n",
-					a,
-					e.Error(),
-					path.Base(e.Caller().File()),
-					e.Caller().Line(),
-					runtime.FuncForPC(e.Caller().Pc()).Name(),
-				)
+				switch {
+				case state.Flag('+'):
+					// Extended stack trace
+					fmt.Fprintf(str, "#%d: `%s`\n", a, runtime.FuncForPC(e.Caller().pc).Name())
+					fmt.Fprintf(str, "\terror:   %s\n", e.Error())
+					fmt.Fprintf(str, "\tline:    %s:%d\n", path.Base(e.Caller().File), e.Caller().Line)
 
-			case state.Flag('-'):
-				// Inline stack trace
-				fmt.Fprintf(str, "#%d - \"%s\" %s:%d (%s) ",
-					a,
-					e.Error(),
-					path.Base(e.Caller().File()),
-					e.Caller().Line(),
-					runtime.FuncForPC(e.Caller().Pc()).Name(),
-				)
+				//case state.Flag('#'):
+				//	// Condensed stack trace
+				//	fmt.Fprintf(str, "#%d - \"%s\" %s:%d (%s)\n",
+				//		a,
+				//		e.Error(),
+				//		path.Base(e.Caller().File),
+				//		e.Caller().Line,
+				//		runtime.FuncForPC(e.Caller().pc).Name(),
+				//	)
 
-			default:
-				// Default output
-				fmt.Fprintf(state, e.Error())
-				return
+				case state.Flag('-'):
+					// Inline stack trace
+					fmt.Fprintf(str, "#%d - \"%s\" %s:%d (%s) ",
+						a,
+						e.Error(),
+						path.Base(e.Caller().File),
+						e.Caller().Line,
+						runtime.FuncForPC(e.Caller().pc).Name(),
+					)
+
+				default:
+					// Default output
+					fmt.Fprintf(state, e.Error())
+					return
+				}
 			}
 		}
 		fmt.Fprintf(state, "%s", strings.Trim(str.String(), " \n\t"))
 	default:
-		// Externally-safe error message
+		// Default output
 		fmt.Fprintf(state, err.Error())
 	}
+}
+
+// MarshalJSON implements the json.Marshaller interface.
+func (err Stack) MarshalJSON() ([]byte, error) {
+	stack := []map[string]interface{}{}
+	if len(err.stack) > 1 {
+		for a := len(err.stack) - 1; a >= 0; a-- {
+			e := err.stack[a]
+			stack = append(stack, map[string]interface{}{
+				"error": e.Error(),
+				"caller": fmt.Sprintf("%s:%d (%s)",
+					path.Base(e.Caller().File),
+					e.Caller().Line,
+					runtime.FuncForPC(e.Caller().pc).Name(),
+				),
+			})
+		}
+	}
+	return json.Marshal(stack)
 }
 
 // String implements the stringer interface.

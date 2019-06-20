@@ -8,60 +8,40 @@ import (
 
 // Caller holds runtime.Caller data.
 type Caller struct {
-	loaded bool
-	file   string
-	line   int
-	ok     bool
-	pc     uintptr
-	trace  []Caller
-}
+	ok    bool
+	pc    uintptr
+	trace []Caller
 
-// File returns the caller file name.
-func (caller Caller) File() string {
-	return caller.file
-}
-
-// Line returns the caller line number.
-func (caller Caller) Line() int {
-	return caller.line
-}
-
-// Ok returns whether the caller data was successfully recovered.
-func (caller Caller) Ok() bool {
-	return caller.ok
-}
-
-// Pc returns the caller program counter.
-func (caller Caller) Pc() uintptr {
-	return caller.pc
+	File string `json:"file,omitempty"`
+	Line int    `json:"line,omitempty"`
 }
 
 // String implements the Stringer interface
 func (caller Caller) String() string {
 	return fmt.Sprintf(
 		"%s:%d %s",
-		caller.file,
-		caller.line,
+		caller.File,
+		caller.Line,
 		runtime.FuncForPC(caller.pc).Name(),
 	)
 }
 
-// Trace returns the call stack leading to this caller.
-func (caller Caller) Trace() []Caller {
-	return caller.trace
-}
-
+// getCaller returns the caller and backtrace of this error.
 func getCaller() Caller {
-	var traceCaller Caller
-	var caller Caller
+	caller := Caller{}
 	trace := []Caller{}
 	a := 0
 	for {
-		if traceCaller.pc, traceCaller.file, traceCaller.line, traceCaller.ok = runtime.Caller(a); traceCaller.ok {
+		traceCaller := Caller{}
+		if traceCaller.pc, traceCaller.File, traceCaller.Line, traceCaller.ok = runtime.Caller(a); traceCaller.ok {
 			trace = append(trace, traceCaller)
-			if !strings.Contains(strings.ToLower(caller.file), "github.com/bdlm/errors") ||
-				strings.HasSuffix(strings.ToLower(caller.file), "_test.go") {
-				caller = traceCaller
+			if !caller.ok &&
+				(!strings.Contains(strings.ToLower(traceCaller.File), "github.com/bdlm/errors") ||
+					strings.HasSuffix(strings.ToLower(traceCaller.File), "_test.go")) {
+				caller.pc = traceCaller.pc
+				caller.File = traceCaller.File
+				caller.Line = traceCaller.Line
+				caller.ok = traceCaller.ok
 			}
 		} else {
 			break
