@@ -98,9 +98,10 @@ func (err Stack) Format(state fmt.State, verb rune) {
 	case 'v':
 		str := bytes.NewBuffer([]byte{})
 
-		err.mux.Lock()
-		defer err.mux.Unlock()
+		//err.mux.Lock()
+		//defer err.mux.Unlock()
 
+		// JSON format
 		if state.Flag('#') {
 			byts, _ := json.Marshal(err)
 			fmt.Fprintf(str, string(byts))
@@ -110,34 +111,49 @@ func (err Stack) Format(state fmt.State, verb rune) {
 				e := err.stack[a]
 
 				switch {
-				case state.Flag('+'):
-					// Extended stack trace
-					fmt.Fprintf(str, "#%d: `%s`\n", a, runtime.FuncForPC(e.Caller().pc).Name())
-					fmt.Fprintf(str, "\terror:   %s\n", e.Error())
-					fmt.Fprintf(str, "\tline:    %s:%d\n", path.Base(e.Caller().File), e.Caller().Line)
+				// Extended stack trace
+				//case state.Flag('+'):
+				//	if nil != e.err {
+				//		fmt.Fprintf(str, "%s - %s:%d (%s) \n",
+				//			//n,
+				//			e.Error(),
+				//			path.Base(e.Caller().File),
+				//			e.Caller().Line,
+				//			runtime.FuncForPC(e.Caller().pc).Name(),
+				//		)
+				//	} else {
+				//		fmt.Fprintf(str, "%s:%d (%s) \n",
+				//			//a,
+				//			path.Base(e.Caller().File),
+				//			e.Caller().Line,
+				//			runtime.FuncForPC(e.Caller().pc).Name(),
+				//		)
+				//	}
+				//	//fmt.Fprintf(str, "#%d: `%s`\n", a, runtime.FuncForPC(e.Caller().pc).Name())
+				//	//fmt.Fprintf(str, "\terror:   %s\n", e.Error())
+				//	//fmt.Fprintf(str, "\tline:    %s:%d\n", path.Base(e.Caller().File), e.Caller().Line)
 
-				//case state.Flag('#'):
-				//	// Condensed stack trace
-				//	fmt.Fprintf(str, "#%d - \"%s\" %s:%d (%s)\n",
-				//		a,
-				//		e.Error(),
-				//		path.Base(e.Caller().File),
-				//		e.Caller().Line,
-				//		runtime.FuncForPC(e.Caller().pc).Name(),
-				//	)
-
+				// Inline stack trace
 				case state.Flag('-'):
-					// Inline stack trace
-					fmt.Fprintf(str, "#%d - \"%s\" %s:%d (%s) ",
-						a,
-						e.Error(),
-						path.Base(e.Caller().File),
-						e.Caller().Line,
-						runtime.FuncForPC(e.Caller().pc).Name(),
-					)
+					if nil != e.err {
+						fmt.Fprintf(str, "#%d %s - %s:%d (%s) ",
+							a,
+							e.Error(),
+							path.Base(e.Caller().File),
+							e.Caller().Line,
+							runtime.FuncForPC(e.Caller().pc).Name(),
+						)
+					} else {
+						fmt.Fprintf(str, "#%d - %s:%d (%s) ",
+							a,
+							path.Base(e.Caller().File),
+							e.Caller().Line,
+							runtime.FuncForPC(e.Caller().pc).Name(),
+						)
+					}
 
+				// Default output
 				default:
-					// Default output
 					fmt.Fprintf(state, e.Error())
 					return
 				}
@@ -152,13 +168,19 @@ func (err Stack) Format(state fmt.State, verb rune) {
 
 // MarshalJSON implements the json.Marshaller interface.
 func (err Stack) MarshalJSON() ([]byte, error) {
-	stack := []map[string]interface{}{}
+	jsonData := []struct {
+		Err    string `json:"error,omitempty"`
+		Caller string `json:"caller,omitempty"`
+	}{}
 	if len(err.stack) > 1 {
 		for a := len(err.stack) - 1; a >= 0; a-- {
 			e := err.stack[a]
-			stack = append(stack, map[string]interface{}{
-				"error": e.Error(),
-				"caller": fmt.Sprintf("%s:%d (%s)",
+			jsonData = append(jsonData, struct {
+				Err    string `json:"error,omitempty"`
+				Caller string `json:"caller,omitempty"`
+			}{
+				Err: e.Error(),
+				Caller: fmt.Sprintf("%s:%d (%s)",
 					path.Base(e.Caller().File),
 					e.Caller().Line,
 					runtime.FuncForPC(e.Caller().pc).Name(),
@@ -166,7 +188,7 @@ func (err Stack) MarshalJSON() ([]byte, error) {
 			})
 		}
 	}
-	return json.Marshal(stack)
+	return json.Marshal(jsonData)
 }
 
 // String implements the stringer interface.

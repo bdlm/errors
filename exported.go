@@ -3,12 +3,13 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"sync"
 )
 
 // Add creates a new stack (or updates a passed stack) the new msg added
 // below the leading error. Usefule for adding debugging data to a system
 // error.
-func Add(err error, msg string, data ...interface{}) Stack {
+func Add(err error, msg string, data ...interface{}) error {
 	var errs Stack
 
 	if nil == err {
@@ -33,12 +34,38 @@ func Add(err error, msg string, data ...interface{}) Stack {
 }
 
 // New creates a new error stack defined by msg.
-func New(msg string, data ...interface{}) Stack {
+func New(msg string, data ...interface{}) error {
 	return newStackFromErr(fmt.Errorf(msg, data...))
 }
 
-// Wrap creates a new stack with a the leading error defined by msg.
-func Wrap(err error, msg string, data ...interface{}) Stack {
+// Track adds caller metadata to an error as it's passed back up the stack.
+func Track(err error) error {
+	if nil == err {
+		return nil
+	}
+
+	stack := Stack{
+		stack: []Error{},
+		mux:   &sync.Mutex{},
+	}
+
+	switch e := err.(type) {
+	case Stack:
+		for _, v := range e.stack {
+			stack.stack = append(stack.stack, v)
+		}
+		stack.stack[len(stack.stack)-1].err = nil
+	}
+	stack.stack = append(stack.stack, Error{
+		err:    err,
+		caller: getCaller(),
+	})
+
+	return stack
+}
+
+// Wrap returns a new error stack with a the leading error defined by msg.
+func Wrap(err error, msg string, data ...interface{}) error {
 	var errs Stack
 
 	if nil == err {

@@ -25,6 +25,9 @@ func (err Error) Error() string {
 
 // String implements Stringer.
 func (err Error) String() string {
+	if nil == err.err {
+		return ""
+	}
 	return err.err.Error()
 }
 
