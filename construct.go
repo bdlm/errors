@@ -42,6 +42,14 @@ func newErr(e error) err {
 	}
 }
 
+// newStackFromError returns a new error stack.
+func newEmptyStack() stack {
+	return stack{
+		stack: make([]err, 1),
+		mux:   &sync.Mutex{},
+	}
+}
+
 // newStack returns a new error stack.
 func newStack(msg string, data ...interface{}) stack {
 	return newStackFromErr(fmt.Errorf(msg, data...))
@@ -49,8 +57,7 @@ func newStack(msg string, data ...interface{}) stack {
 
 // newStackFromError returns a new error stack.
 func newStackFromErr(e error) stack {
-	return stack{
-		stack: []err{newErr(e)},
-		mux:   &sync.Mutex{},
-	}
+	s := newEmptyStack()
+	s.stack[0] = newErr(e)
+	return s
 }

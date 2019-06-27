@@ -39,7 +39,9 @@ func TestErrors(t *testing.T) {
 	e = errors.Track(e)
 	e = errors.Track(e)
 
-	fmt.Printf("%#v\n\n", e)
+	//spew.Printf("spew: %#+v\n\n", e)
+
+	fmt.Printf("%%v: %+v\n\n", e)
 
 	log.WithError(e).Info("log test")
 

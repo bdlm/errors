@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -55,35 +56,36 @@ func (e stack) Format(state fmt.State, verb rune) {
 
 		// JSON format
 		if state.Flag('#') {
-			byts, _ := json.Marshal(e)
+			var byts []byte
+			if state.Flag('+') {
+				byts, _ = json.MarshalIndent(e, "", "    ")
+			} else {
+				byts, _ = json.Marshal(e)
+			}
 			fmt.Fprintf(str, string(byts))
 
 		} else {
-			for a := len(e.stack) - 1; a >= 0; a-- {
-				err := e.stack[a]
+			for a, err := range e.stack { // a := len(e.stack) - 1; a >= 0; a--
 
 				switch {
 				// Extended stack trace
-				//case state.Flag('+'):
-				//	if nil != err.err {
-				//		fmt.Fprintf(str, "%s - %s:%d (%s) \n",
-				//			//n,
-				//			err.Error(),
-				//			path.Base(err.Caller().File),
-				//			err.Caller().Line,
-				//			runtime.FuncForPC(err.Caller().pc).Name(),
-				//		)
-				//	} else {
-				//		fmt.Fprintf(str, "%s:%d (%s) \n",
-				//			//a,
-				//			path.Base(err.Caller().File),
-				//			err.Caller().Line,
-				//			runtime.FuncForPC(err.Caller().pc).Name(),
-				//		)
-				//	}
-				//	//fmt.Fprintf(str, "#%d: `%s`\n", a, runtime.FuncForPC(err.Caller().pc).Name())
-				//	//fmt.Fprintf(str, "\terror:   %s\n", err.Error())
-				//	//fmt.Fprintf(str, "\tline:    %s:%d\n", path.Base(err.Caller().File), err.Caller().Line)
+				case state.Flag('+'):
+					if "" != err.Error() {
+						fmt.Fprintf(str, "#%d %s:%d (%s) - %s\n",
+							a,
+							path.Base(err.Caller().File()),
+							err.Caller().Line(),
+							runtime.FuncForPC(err.Caller().(caller).pc).Name(),
+							err.Error(),
+						)
+					} else {
+						fmt.Fprintf(str, "#%d %s:%d (%s) \n",
+							a,
+							path.Base(err.Caller().File()),
+							err.Caller().Line(),
+							runtime.FuncForPC(err.Caller().(caller).pc).Name(),
+						)
+					}
 
 				// Inline stack trace
 				case state.Flag('-'):
@@ -120,18 +122,17 @@ func (e stack) Format(state fmt.State, verb rune) {
 
 // MarshalJSON implements the json.Marshaller interface.
 func (e stack) MarshalJSON() ([]byte, error) {
-	jsonData := []struct {
+	type data struct {
 		Err    string `json:"error,omitempty"`
 		Caller string `json:"caller,omitempty"`
-	}{}
+	}
+
+	jsonData := []data{}
+
 	e.mux.Lock()
 	if len(e.stack) > 1 {
-		for a := len(e.stack) - 1; a >= 0; a-- {
-			err := e.stack[a]
-			jsonData = append(jsonData, struct {
-				Err    string `json:"error,omitempty"`
-				Caller string `json:"caller,omitempty"`
-			}{
+		for _, err := range e.stack {
+			jsonData = append(jsonData, data{
 				Err: err.Error(),
 				Caller: fmt.Sprintf("%s:%d (%s)",
 					path.Base(err.Caller().File()),
@@ -142,6 +143,7 @@ func (e stack) MarshalJSON() ([]byte, error) {
 		}
 	}
 	e.mux.Unlock()
+
 	return json.Marshal(jsonData)
 }
 
@@ -153,25 +155,105 @@ func (e stack) String() string {
 // Trace returns the call stack.
 func (e stack) Trace() []Caller {
 	var callers []Caller
+
 	for _, caller := range e.stack {
 		callers = append(callers, caller.Caller())
 	}
+
 	return callers
 }
 
 // append appends an error to the stack.
 func (e stack) append(errors ...err) stack {
+	ret := newEmptyStack()
+	ret.stack = make([]err, e.len()+len(errors))
+
+	var (
+		a int
+		b err
+	)
+
 	e.mux.Lock()
-	e.stack = append(e.stack, errors...)
+	for a, b = range e.stack {
+		ret.stack[a] = b
+	}
 	e.mux.Unlock()
-	return e
+
+	for _, b = range errors {
+		a++
+		ret.stack[a] = b
+	}
+
+	return ret
 }
 
-// last returns the last error appended to the stack.
-func (e stack) last() err {
-	var err err
+// clone returns a clone of the stack.
+func (e stack) clone(errors ...err) stack {
+	ret := newEmptyStack()
+	ret.stack = make([]err, len(e.stack))
+
 	e.mux.Lock()
-	err = e.stack[len(e.stack)-1]
+	for a, b := range e.stack {
+		ret.stack[a] = b
+	}
 	e.mux.Unlock()
-	return err
+
+	return ret
+}
+
+// first returns the first error added to the stack.
+func (e stack) first() err {
+	var ret err
+
+	e.mux.Lock()
+	ret = e.stack[len(e.stack)-1]
+	e.mux.Unlock()
+
+	return ret
+}
+
+// last returns the last error added to the stack.
+func (e stack) last() err {
+	var ret err
+
+	e.mux.Lock()
+	ret = e.stack[0]
+	e.mux.Unlock()
+
+	return ret
+}
+
+// len returns the current length of the stack.
+func (e stack) len() int {
+	var ret int
+
+	e.mux.Lock()
+	ret = len(e.stack)
+	e.mux.Unlock()
+
+	return ret
+}
+
+// prepend prepends an error to the stack.
+func (e stack) prepend(errors ...err) stack {
+	ret := newEmptyStack()
+	ret.stack = make([]err, e.len()+len(errors))
+
+	var (
+		a int
+		b err
+	)
+
+	for a, b = range errors {
+		ret.stack[a] = b
+	}
+
+	e.mux.Lock()
+	for _, b = range e.stack {
+		a++
+		ret.stack[a] = b
+	}
+	e.mux.Unlock()
+
+	return ret
 }
