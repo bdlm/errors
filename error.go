@@ -1,37 +1,35 @@
 package errors
 
-// Error defines a single error stack entry.
-type Error struct {
-	err    error
-	caller Caller
+// err defines a single error stack entry.
+type err struct {
+	e      error
+	caller caller
 }
 
-func newError(e error) Error {
-	return Error{
-		err:    e,
-		caller: getCaller(),
-	}
-}
-
-// Caller implements Err.
-func (err Error) Caller() Caller {
+// Caller implements Error.
+func (err err) Caller() Caller {
 	return err.caller
 }
 
+// Cause implements Error.
+func (err err) Cause() Error {
+	return err
+}
+
 // Error implements error.
-func (err Error) Error() string {
+func (err err) Error() string {
 	return err.String()
 }
 
 // String implements Stringer.
-func (err Error) String() string {
-	if nil == err.err {
+func (err err) String() string {
+	if nil == err.e {
 		return ""
 	}
-	return err.err.Error()
+	return err.e.Error()
 }
 
-// Trace implements Err.
-func (err Error) Trace() []Caller {
-	return err.Caller().trace
+// Trace implements Error.
+func (err err) Trace() []Caller {
+	return err.Caller().(caller).trace
 }

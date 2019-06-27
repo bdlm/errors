@@ -5,77 +5,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
-	"runtime"
 	"strings"
 	"sync"
 )
 
-// Stack represents an error stack.
-type Stack struct {
-	stack []Error
+// stack represents an error stack.
+type stack struct {
+	stack []err
 	mux   *sync.Mutex
 }
 
-// newStack returns a new error stack.
-func newStack(msg string, data ...interface{}) Stack {
-	return Stack{
-		stack: []Error{
-			Error{
-				err:    fmt.Errorf(msg, data...),
-				caller: getCaller(),
-			},
-		},
-		mux: &sync.Mutex{},
-	}
-}
-
-// newStackFromError returns a new error stack.
-func newStackFromErr(err error) Stack {
-	return Stack{
-		stack: []Error{
-			Error{
-				err:    err,
-				caller: getCaller(),
-			},
-		},
-		mux: &sync.Mutex{},
-	}
-}
-
-// last returns the last error appended to the stack.
-func (err Stack) last() Error {
-	var e Error
-	err.mux.Lock()
-	e = err.stack[len(err.stack)-1]
-	err.mux.Unlock()
-	return e
-}
-
-// append appends an Error to the stack.
-func (err Stack) append(e ...Error) Stack {
-	err.mux.Lock()
-	err.stack = append(err.stack, e...)
-	err.mux.Unlock()
-	return err
-}
-
 // Caller returns the most recent error caller.
-func (err Stack) Caller() Caller {
-	return err.last().Caller()
+func (e stack) Caller() Caller {
+	return e.last().Caller()
 }
 
 // Cause returns the root cause of an error stack.
-func (err Stack) Cause() Error {
-	var e Error
-	err.mux.Lock()
-	e = err.stack[0]
-	err.mux.Unlock()
-	return e
+func (e stack) Cause() Error {
+	return e.stack[0]
 }
 
 // Error returns the most recent error message.
-func (err Stack) Error() string {
-	return fmt.Sprintf("%v", err)
+func (e stack) Error() string {
+	return fmt.Sprintf("%v", e)
 }
 
 // Format implements fmt.Formatter. https://golang.org/pkg/fmt/#hdr-Printing
@@ -93,68 +45,68 @@ func (err Stack) Error() string {
 //
 //  %#v - Returns a full call stack trace as a JSON object, useful for
 //        logging.
-func (err Stack) Format(state fmt.State, verb rune) {
+func (e stack) Format(state fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		str := bytes.NewBuffer([]byte{})
 
-		//err.mux.Lock()
-		//defer err.mux.Unlock()
+		//e.mux.Lock()
+		//defer e.mux.Unlock()
 
 		// JSON format
 		if state.Flag('#') {
-			byts, _ := json.Marshal(err)
+			byts, _ := json.Marshal(e)
 			fmt.Fprintf(str, string(byts))
 
 		} else {
-			for a := len(err.stack) - 1; a >= 0; a-- {
-				e := err.stack[a]
+			for a := len(e.stack) - 1; a >= 0; a-- {
+				err := e.stack[a]
 
 				switch {
 				// Extended stack trace
 				//case state.Flag('+'):
-				//	if nil != e.err {
+				//	if nil != err.err {
 				//		fmt.Fprintf(str, "%s - %s:%d (%s) \n",
 				//			//n,
-				//			e.Error(),
-				//			path.Base(e.Caller().File),
-				//			e.Caller().Line,
-				//			runtime.FuncForPC(e.Caller().pc).Name(),
+				//			err.Error(),
+				//			path.Base(err.Caller().File),
+				//			err.Caller().Line,
+				//			runtime.FuncForPC(err.Caller().pc).Name(),
 				//		)
 				//	} else {
 				//		fmt.Fprintf(str, "%s:%d (%s) \n",
 				//			//a,
-				//			path.Base(e.Caller().File),
-				//			e.Caller().Line,
-				//			runtime.FuncForPC(e.Caller().pc).Name(),
+				//			path.Base(err.Caller().File),
+				//			err.Caller().Line,
+				//			runtime.FuncForPC(err.Caller().pc).Name(),
 				//		)
 				//	}
-				//	//fmt.Fprintf(str, "#%d: `%s`\n", a, runtime.FuncForPC(e.Caller().pc).Name())
-				//	//fmt.Fprintf(str, "\terror:   %s\n", e.Error())
-				//	//fmt.Fprintf(str, "\tline:    %s:%d\n", path.Base(e.Caller().File), e.Caller().Line)
+				//	//fmt.Fprintf(str, "#%d: `%s`\n", a, runtime.FuncForPC(err.Caller().pc).Name())
+				//	//fmt.Fprintf(str, "\terror:   %s\n", err.Error())
+				//	//fmt.Fprintf(str, "\tline:    %s:%d\n", path.Base(err.Caller().File), err.Caller().Line)
 
 				// Inline stack trace
 				case state.Flag('-'):
-					if nil != e.err {
+					if nil != err.e {
 						fmt.Fprintf(str, "#%d %s - %s:%d (%s) ",
 							a,
-							e.Error(),
-							path.Base(e.Caller().File),
-							e.Caller().Line,
-							runtime.FuncForPC(e.Caller().pc).Name(),
+							err.Error(),
+							path.Base(err.Caller().File()),
+							err.Caller().Line(),
+							err.Caller().Func(),
 						)
 					} else {
 						fmt.Fprintf(str, "#%d - %s:%d (%s) ",
 							a,
-							path.Base(e.Caller().File),
-							e.Caller().Line,
-							runtime.FuncForPC(e.Caller().pc).Name(),
+							path.Base(err.Caller().File()),
+							err.Caller().Line(),
+							err.Caller().Func(),
 						)
 					}
 
 				// Default output
 				default:
-					fmt.Fprintf(state, e.Error())
+					fmt.Fprintf(state, err.Error())
 					return
 				}
 			}
@@ -162,45 +114,64 @@ func (err Stack) Format(state fmt.State, verb rune) {
 		fmt.Fprintf(state, "%s", strings.Trim(str.String(), " \n\t"))
 	default:
 		// Default output
-		fmt.Fprintf(state, err.Error())
+		fmt.Fprintf(state, e.Error())
 	}
 }
 
 // MarshalJSON implements the json.Marshaller interface.
-func (err Stack) MarshalJSON() ([]byte, error) {
+func (e stack) MarshalJSON() ([]byte, error) {
 	jsonData := []struct {
 		Err    string `json:"error,omitempty"`
 		Caller string `json:"caller,omitempty"`
 	}{}
-	if len(err.stack) > 1 {
-		for a := len(err.stack) - 1; a >= 0; a-- {
-			e := err.stack[a]
+	e.mux.Lock()
+	if len(e.stack) > 1 {
+		for a := len(e.stack) - 1; a >= 0; a-- {
+			err := e.stack[a]
 			jsonData = append(jsonData, struct {
 				Err    string `json:"error,omitempty"`
 				Caller string `json:"caller,omitempty"`
 			}{
-				Err: e.Error(),
+				Err: err.Error(),
 				Caller: fmt.Sprintf("%s:%d (%s)",
-					path.Base(e.Caller().File),
-					e.Caller().Line,
-					runtime.FuncForPC(e.Caller().pc).Name(),
+					path.Base(err.Caller().File()),
+					err.Caller().Line(),
+					err.Caller().Func(),
 				),
 			})
 		}
 	}
+	e.mux.Unlock()
 	return json.Marshal(jsonData)
 }
 
 // String implements the stringer interface.
-func (err Stack) String() string {
-	return err.Error()
+func (e stack) String() string {
+	return e.Error()
 }
 
 // Trace returns the call stack.
-func (err Stack) Trace() []Caller {
+func (e stack) Trace() []Caller {
 	var callers []Caller
-	for _, caller := range err.stack {
+	for _, caller := range e.stack {
 		callers = append(callers, caller.Caller())
 	}
 	return callers
+}
+
+// append appends an error to the stack.
+func (e stack) append(errors ...err) stack {
+	e.mux.Lock()
+	e.stack = append(e.stack, errors...)
+	e.mux.Unlock()
+	return e
+}
+
+// last returns the last error appended to the stack.
+func (e stack) last() err {
+	var err err
+	e.mux.Lock()
+	err = e.stack[len(e.stack)-1]
+	e.mux.Unlock()
+	return err
 }

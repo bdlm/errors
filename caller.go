@@ -3,51 +3,38 @@ package errors
 import (
 	"fmt"
 	"runtime"
-	"strings"
 )
 
-// Caller holds runtime.Caller data.
-type Caller struct {
+// caller holds runtime.Caller data.
+type caller struct {
+	file  string
+	line  int
 	ok    bool
 	pc    uintptr
 	trace []Caller
-
-	File string `json:"file,omitempty"`
-	Line int    `json:"line,omitempty"`
 }
 
-// String implements the Stringer interface
-func (caller Caller) String() string {
+// File implements Caller.
+func (caller caller) File() string {
+	return caller.file
+}
+
+// Func implements Caller.
+func (caller caller) Func() string {
+	return runtime.FuncForPC(caller.pc).Name()
+}
+
+// Line implements Caller.
+func (caller caller) Line() int {
+	return caller.line
+}
+
+// String implements Stringer.
+func (caller caller) String() string {
 	return fmt.Sprintf(
 		"%s:%d %s",
-		caller.File,
-		caller.Line,
+		caller.file,
+		caller.line,
 		runtime.FuncForPC(caller.pc).Name(),
 	)
-}
-
-// getCaller returns the caller and backtrace of this error.
-func getCaller() Caller {
-	caller := Caller{}
-	trace := []Caller{}
-	a := 0
-	for {
-		traceCaller := Caller{}
-		if traceCaller.pc, traceCaller.File, traceCaller.Line, traceCaller.ok = runtime.Caller(a); traceCaller.ok {
-			trace = append(trace, traceCaller)
-			if !caller.ok &&
-				(!strings.Contains(strings.ToLower(traceCaller.File), "github.com/bdlm/errors") ||
-					strings.HasSuffix(strings.ToLower(traceCaller.File), "_test.go")) {
-				caller.pc = traceCaller.pc
-				caller.File = traceCaller.File
-				caller.Line = traceCaller.Line
-				caller.ok = traceCaller.ok
-			}
-		} else {
-			break
-		}
-		a++
-	}
-	caller.trace = trace
-	return caller
 }

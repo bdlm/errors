@@ -14,7 +14,7 @@ func init() {
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(&log.TextFormatter{
 		//DisableTTY: true,
-		ForceTTY: true,
+		//ForceTTY: true,
 		FieldMap: log.FieldMap{
 			"data": "_",
 		},
