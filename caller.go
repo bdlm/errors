@@ -3,6 +3,7 @@ package errors
 import (
 	"fmt"
 	"runtime"
+	"strings"
 )
 
 // caller holds runtime.Caller data.
@@ -12,6 +13,33 @@ type caller struct {
 	ok    bool
 	pc    uintptr
 	trace []Caller
+}
+
+// newCaller returns a new caller instance containing data for the current
+// call stack.
+func newCaller() caller {
+	trace := []Caller{}
+	clr := caller{}
+	a := 0
+	for {
+		traceCaller := caller{}
+		if traceCaller.pc, traceCaller.file, traceCaller.line, traceCaller.ok = runtime.Caller(a); traceCaller.ok {
+			trace = append(trace, traceCaller)
+			if !clr.ok &&
+				(!strings.Contains(strings.ToLower(traceCaller.file), "github.com/bdlm/errors") ||
+					strings.HasSuffix(strings.ToLower(traceCaller.file), "_test.go")) {
+				clr.pc = traceCaller.pc
+				clr.file = traceCaller.file
+				clr.line = traceCaller.line
+				clr.ok = traceCaller.ok
+			}
+		} else {
+			break
+		}
+		a++
+	}
+	clr.trace = trace
+	return clr
 }
 
 // File implements Caller.
@@ -29,6 +57,11 @@ func (caller caller) Line() int {
 	return caller.line
 }
 
+// Pc implements Caller.
+func (caller caller) Pc() uintptr {
+	return caller.pc
+}
+
 // String implements Stringer.
 func (caller caller) String() string {
 	return fmt.Sprintf(
@@ -37,4 +70,9 @@ func (caller caller) String() string {
 		caller.line,
 		runtime.FuncForPC(caller.pc).Name(),
 	)
+}
+
+// Trace implements Caller.
+func (caller caller) Trace() []Caller {
+	return caller.trace
 }

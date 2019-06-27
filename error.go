@@ -6,6 +6,14 @@ type err struct {
 	caller caller
 }
 
+// newErr returns a new err instance.
+func newErr(e error) err {
+	return err{
+		e:      e,
+		caller: newCaller(),
+	}
+}
+
 // Caller implements Error.
 func (err err) Caller() Caller {
 	return err.caller
@@ -31,5 +39,5 @@ func (err err) String() string {
 
 // Trace implements Error.
 func (err err) Trace() []Caller {
-	return err.Caller().(caller).trace
+	return err.Caller().Trace()
 }

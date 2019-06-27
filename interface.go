@@ -10,6 +10,12 @@ type Caller interface {
 
 	// Line returns the line number in the file in which the call occurred.
 	Line() int
+
+	// Pc returns the program counter.
+	Pc() uintptr
+
+	// Trace returns the call stack.
+	Trace() []Caller
 }
 
 // Error defines the error interface.

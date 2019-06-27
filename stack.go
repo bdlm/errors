@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"path"
 	"runtime"
-	"strings"
 	"sync"
 )
 
@@ -14,6 +13,26 @@ import (
 type stack struct {
 	stack []err
 	mux   *sync.Mutex
+}
+
+// newStackFromError returns a new error stack.
+func newEmptyStack() stack {
+	return stack{
+		stack: make([]err, 1),
+		mux:   &sync.Mutex{},
+	}
+}
+
+// newStack returns a new error stack.
+func newStack(msg string, data ...interface{}) stack {
+	return newStackFromErr(fmt.Errorf(msg, data...))
+}
+
+// newStackFromError returns a new error stack.
+func newStackFromErr(e error) stack {
+	s := newEmptyStack()
+	s.stack[0] = newErr(e)
+	return s
 }
 
 // Caller returns the most recent error caller.
@@ -33,91 +52,135 @@ func (e stack) Error() string {
 
 // Format implements fmt.Formatter. https://golang.org/pkg/fmt/#hdr-Printing
 //
-// Format formats the stack trace output. Several verbs are supported:
-//  %s  - Returns the error string of the last error added
+// Verbs:
+//     %s      Returns the error string of the last error added
+//     %v      Alias for %s
 //
-//  %v  - Alias for %s
+//  Flags:
+//      #      JSON formatted output, useful for logging
+//      -      Output caller details, useful for troubleshooting
+//      +      Output full error stack details, useful for debugging
+//      ' '    Add whitespace for readability, useful for development
 //
-//  %-v - Returns the full call stack trace in a single line, useful for
-//        logging. Same as %#v with the newlines escaped.
-//
-//  %+v - Returns a multi-line call stack trace including the full trace of
-//        each addition to the call stack. Useful for development.
-//
-//  %#v - Returns a full call stack trace as a JSON object, useful for
-//        logging.
+// Examples:
+//      %s:    An error occurred
+//      %v:    An error occurred
+//      %-v:   #0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors) - An error occurred
+//      %+v:   #0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors) - An error occurred #1 stack_test.go:39 (github.com/bdlm/errors_test.TestErrors) - An error occurred
+//      %#v:   {"error":"An error occurred"}
+//      %#-v:  {"caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)","error":"An error occurred"}
+//      %#+v:  [{"caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/errors_test.TestErrors)","error":"An error occurred"}]
+//      %# v:  {
+//                 "error":"An error occurred"
+//             }
+//      %# -v: {
+//                 "caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)",
+//                 "error":"An error occurred"
+//             }
+//      %# +v: [
+//                 {
+//                     "caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)",
+//                     "error":"An error occurred"
+//                 },
+//                 {
+//                     "caller":"#0 stack_test.go:39 (github.com/bdlm/errors_test.TestErrors)",
+//                     "error":"An error occurred"
+//                 }
+//             ]
 func (e stack) Format(state fmt.State, verb rune) {
+	str := bytes.NewBuffer([]byte{})
+
 	switch verb {
+	default:
+		fmt.Fprintf(str, e.Error())
+
 	case 'v':
-		str := bytes.NewBuffer([]byte{})
+		var (
+			flagDetail bool
+			flagFormat bool
+			flagTrace  bool
+			modeJSON   bool
+		)
 
-		//e.mux.Lock()
-		//defer e.mux.Unlock()
-
-		// JSON format
 		if state.Flag('#') {
-			var byts []byte
-			if state.Flag('+') {
-				byts, _ = json.MarshalIndent(e, "", "    ")
-			} else {
-				byts, _ = json.Marshal(e)
-			}
-			fmt.Fprintf(str, string(byts))
+			modeJSON = true
+		}
+		if state.Flag(' ') {
+			flagFormat = true
+		}
+		if state.Flag('-') {
+			flagDetail = true
+		}
+		if state.Flag('+') {
+			flagDetail = true
+			flagTrace = true
+		}
 
-		} else {
-			for a, err := range e.stack { // a := len(e.stack) - 1; a >= 0; a--
-
-				switch {
-				// Extended stack trace
-				case state.Flag('+'):
-					if "" != err.Error() {
-						fmt.Fprintf(str, "#%d %s:%d (%s) - %s\n",
-							a,
-							path.Base(err.Caller().File()),
-							err.Caller().Line(),
-							runtime.FuncForPC(err.Caller().(caller).pc).Name(),
-							err.Error(),
-						)
-					} else {
-						fmt.Fprintf(str, "#%d %s:%d (%s) \n",
-							a,
-							path.Base(err.Caller().File()),
-							err.Caller().Line(),
-							runtime.FuncForPC(err.Caller().(caller).pc).Name(),
-						)
-					}
-
-				// Inline stack trace
-				case state.Flag('-'):
-					if nil != err.e {
-						fmt.Fprintf(str, "#%d %s - %s:%d (%s) ",
-							a,
-							err.Error(),
-							path.Base(err.Caller().File()),
-							err.Caller().Line(),
-							err.Caller().Func(),
-						)
-					} else {
-						fmt.Fprintf(str, "#%d - %s:%d (%s) ",
-							a,
-							path.Base(err.Caller().File()),
-							err.Caller().Line(),
-							err.Caller().Func(),
-						)
-					}
-
-				// Default output
-				default:
-					fmt.Fprintf(state, err.Error())
-					return
+		jsonData := []map[string]string{}
+		for a, err := range e.stack {
+			if modeJSON {
+				data := map[string]string{}
+				if flagDetail {
+					data["caller"] = fmt.Sprintf("#%d %s:%d (%s)",
+						a,
+						path.Base(err.Caller().File()),
+						err.Caller().Line(),
+						runtime.FuncForPC(err.Caller().Pc()).Name(),
+					)
 				}
+				if "" != err.Error() {
+					data["error"] = err.Error()
+				}
+				jsonData = append(jsonData, data)
+
+			} else {
+				if flagDetail {
+					fmt.Fprintf(str, "#%d %s:%d (%s) ",
+						a,
+						path.Base(err.Caller().File()),
+						err.Caller().Line(),
+						runtime.FuncForPC(err.Caller().Pc()).Name(),
+					)
+					if "" != err.Error() {
+						fmt.Fprintf(str, "- ")
+					}
+				}
+
+				if "" != err.Error() {
+					fmt.Fprintf(str, "%s ", err.Error())
+				}
+
+				if flagFormat {
+					fmt.Fprintf(str, "\n")
+				}
+
+			}
+
+			if !flagTrace {
+				break
 			}
 		}
-		fmt.Fprintf(state, "%s", strings.Trim(str.String(), " \n\t"))
-	default:
-		// Default output
-		fmt.Fprintf(state, e.Error())
+
+		if modeJSON {
+			var data interface{}
+			if !flagTrace {
+				data = jsonData[0]
+			} else {
+				data = jsonData
+			}
+
+			var byts []byte
+			if flagFormat {
+				byts, _ = json.MarshalIndent(data, "", "    ")
+			} else {
+				byts, _ = json.Marshal(data)
+			}
+
+			str.Write(byts)
+		}
 	}
+
+	fmt.Fprintf(state, "%s", str.String())
 }
 
 // MarshalJSON implements the json.Marshaller interface.

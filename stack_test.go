@@ -39,11 +39,47 @@ func TestErrors(t *testing.T) {
 	e = errors.Track(e)
 	e = errors.Track(e)
 
-	//spew.Printf("spew: %#+v\n\n", e)
+	//spew.Printf("spew:\n%#+v\n\n", e)
 
-	fmt.Printf("%%v: %+v\n\n", e)
+	// '#' modeJSON = true
+	// ' ' flagFormat = true
+	// '-' flagTrace = true
+	// '+' flagDetail = true
 
-	log.WithError(e).Info("log test")
+	//fmt.Printf("%%v:\n%v\n\n", e)
+	//fmt.Printf("%%-v:\n%-v\n\n", e)
+	//fmt.Printf("%%+v:\n%+v\n\n", e)
+	//fmt.Printf("%%+-v:\n%+-v\n\n", e)
+
+	//fmt.Printf("%% v:\n% v\n\n", e)
+	//fmt.Printf("%% -v:\n% -v\n\n", e)
+	//fmt.Printf("%% +v:\n% +v\n\n", e)
+	//fmt.Printf("%% +-v:\n% +-v\n\n", e)
+
+	//fmt.Printf("%%#v:\n%#v\n\n", e)
+	//fmt.Printf("%%#-v:\n%#-v\n\n", e)
+	//fmt.Printf("%%#+v:\n%#+v\n\n", e)
+	//fmt.Printf("%%#+-v:\n%#+-v\n\n", e)
+
+	//fmt.Printf("%% #v:\n% #v\n\n", e)
+	//fmt.Printf("%% #-v:\n% #-v\n\n", e)
+	fmt.Printf("%% #+v:\n% #+v\n\n", e)
+	//fmt.Printf("%% #+-v:\n% #+-v\n\n", e)
+
+	//fmt.Printf("%%v:\n%v\n\n", e)
+	//fmt.Printf("%%+v:\n%+v\n\n", e)
+	//fmt.Printf("%%#v:\n%#v\n\n", e)
+	//fmt.Printf("%%#+v:\n%#+v\n\n", e)
+	//fmt.Printf("%% v:\n% v\n\n", e)
+	//fmt.Printf("%% +v:\n% +v\n\n", e)
+	//fmt.Printf("%% #v:\n% #v\n\n", e)
+	//fmt.Printf("%% #+v:\n% #+v\n\n", e)
+	//fmt.Printf("%%- v:\n%- v\n\n", e)
+	//fmt.Printf("%%- +v:\n%- +v\n\n", e)
+	//fmt.Printf("%%- #v:\n%- #v\n\n", e)
+	//fmt.Printf("%%- #+v:\n%- #+v\n\n", e)
+
+	//log.WithError(e).Info("log test")
 
 	//byts, _ := json.Marshal(e)
 	//assert.Equal(2, 1, string(byts))
