@@ -62,8 +62,8 @@ func TestErrors(t *testing.T) {
 	//fmt.Printf("%%#+-v:\n%#+-v\n\n", e)
 
 	//fmt.Printf("%% #v:\n% #v\n\n", e)
-	//fmt.Printf("%% #-v:\n% #-v\n\n", e)
-	fmt.Printf("%% #+v:\n% #+v\n\n", e)
+	fmt.Printf("%% #-v:\n% #-v\n\n", e)
+	//fmt.Printf("%% #+v:\n% #+v\n\n", e)
 	//fmt.Printf("%% #+-v:\n% #+-v\n\n", e)
 
 	//fmt.Printf("%%v:\n%v\n\n", e)

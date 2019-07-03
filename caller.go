@@ -15,23 +15,24 @@ type caller struct {
 	trace []Caller
 }
 
-// newCaller returns a new caller instance containing data for the current
+// NewCaller returns a new caller instance containing data for the current
 // call stack.
-func newCaller() caller {
+func NewCaller() Caller {
 	trace := []Caller{}
 	clr := caller{}
 	a := 0
 	for {
 		traceCaller := caller{}
 		if traceCaller.pc, traceCaller.file, traceCaller.line, traceCaller.ok = runtime.Caller(a); traceCaller.ok {
-			trace = append(trace, traceCaller)
-			if !clr.ok &&
-				(!strings.Contains(strings.ToLower(traceCaller.file), "github.com/bdlm/errors") ||
-					strings.HasSuffix(strings.ToLower(traceCaller.file), "_test.go")) {
-				clr.pc = traceCaller.pc
-				clr.file = traceCaller.file
-				clr.line = traceCaller.line
-				clr.ok = traceCaller.ok
+			if !strings.Contains(strings.ToLower(traceCaller.file), "github.com/bdlm/errors") ||
+				strings.HasSuffix(strings.ToLower(traceCaller.file), "_test.go") {
+				trace = append(trace, traceCaller)
+				if !clr.ok {
+					clr.pc = traceCaller.pc
+					clr.file = traceCaller.file
+					clr.line = traceCaller.line
+					clr.ok = traceCaller.ok
+				}
 			}
 		} else {
 			break
