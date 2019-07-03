@@ -102,12 +102,12 @@ func Unwrap(e error) Err {
 	return nil
 }
 
-// Wrap returns a new error that wrapps the provided error.
+// Wrap returns a new error that wraps the provided error.
 func Wrap(e error, msg string, data ...interface{}) Err {
 	return WrapE(e, fmt.Errorf(msg, data...))
 }
 
-// WrapE returns a new error that wrapps the provided error.
+// WrapE returns a new error that wraps the provided error.
 func WrapE(e, err error) Err {
 	return ex{
 		caller: NewCaller(),

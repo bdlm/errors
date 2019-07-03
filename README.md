@@ -19,13 +19,20 @@ import (
 )
 ```
 
-One of the most common frustrations with go error handling is the lack of exceptions in the language. You can use the `panic`/`recover` method to simulate the behavior but that's akward, clunky, requires many lines of code, and is hard to follow. It is also very common practice to handle an exception and run additional code or simply use an exception to inform higher-level code about internal behavior from deeper in the call stack.
+One of the most common frustrations with go error handling is the lack of exceptions in the language. You can use the `panic`/`recover` method to simulate the behavior but that's akward, clunky, requires many lines of code, and is hard to follow.
 
 As Pike says, errors are values, and when `panic`/`recover` isn't a reasonable solution you have to handle passing that information up the stack yourself. Which kind of sucks and leaves us with the `if err != nil` idiom which is fairly useless without a solid pattern behind it.
 
-Since the idom is that we handle the error all the way up the stack anyway, it's trivial to make errors much, much more useful with a good error package. This package makes this simple and supports tracing the call stack and the error callers.
+Since the idom is that we handle the error all the way up the stack anyway, it's trivial to make errors much more informative with a good error package. The `bdlm/errors` package makes this simple and supports tracing the call stack and the error callers.
 
-It is still possible to define custom errors. Custom error types are fully compatible with this package as well and can be used freely.
+Custom error types are fully compatible with this package as well and can be used freely.
+
+## The `Err` interface
+
+The exported methods return an interface that exposes additional metadata and
+
+
+
 
 ## Error stacks
 
