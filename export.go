@@ -6,7 +6,7 @@ import (
 
 // Errorf formats according to a format specifier and returns the string
 // as a value that satisfies error.
-func Errorf(msg string, data ...interface{}) error {
+func Errorf(msg string, data ...interface{}) Err {
 	return New(msg, data...)
 }
 
@@ -37,7 +37,7 @@ func Is(err, test error) bool {
 
 // New formats according to a format specifier and returns the string
 // as a value that satisfies error.
-func New(msg string, data ...interface{}) error {
+func New(msg string, data ...interface{}) Err {
 	return ex{
 		caller: NewCaller(),
 		err:    fmt.Errorf(msg, data...),
@@ -46,7 +46,7 @@ func New(msg string, data ...interface{}) error {
 
 // Track updates caller metadata on an error as it's passed back up the
 // stack.
-func Track(e error) error {
+func Track(e error) Err {
 	if nil == e {
 		return nil
 	}
@@ -68,20 +68,28 @@ func Track(e error) error {
 }
 
 // Unwrap returns the previous error.
-func Unwrap(e error) error {
+func Unwrap(e error) Err {
 	if tmp, ok := e.(ex); ok {
-		return tmp.prev
+		if nil != tmp.prev {
+			if tmp2, ok := tmp.prev.(ex); ok {
+				return tmp2
+			}
+			return ex{
+				caller: NewCaller(),
+				err:    tmp,
+			}
+		}
 	}
 	return nil
 }
 
 // Wrap returns a new error that wrapps the provided error.
-func Wrap(e error, msg string, data ...interface{}) error {
+func Wrap(e error, msg string, data ...interface{}) Err {
 	return WrapE(e, fmt.Errorf(msg, data...))
 }
 
 // WrapE returns a new error that wrapps the provided error.
-func WrapE(e, err error) error {
+func WrapE(e, err error) Err {
 	return ex{
 		caller: NewCaller(),
 		err:    err,

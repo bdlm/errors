@@ -6,6 +6,24 @@ import (
 	"strings"
 )
 
+// Caller holds runtime.Caller data.
+type Caller interface {
+	// File returns the file in which the call occurred.
+	File() string
+
+	// Func returns the name of the function in which the call occurred.
+	Func() string
+
+	// Line returns the line number in the file in which the call occurred.
+	Line() int
+
+	// Pc returns the program counter.
+	Pc() uintptr
+
+	// Trace returns the call stack.
+	Trace() []Caller
+}
+
 // caller holds runtime.Caller data.
 type caller struct {
 	file  string
