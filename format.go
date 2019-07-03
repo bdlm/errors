@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"runtime"
+	"strings"
 )
 
 // Format implements fmt.Formatter. https://golang.org/pkg/fmt/#hdr-Printing
@@ -109,44 +110,58 @@ func (e ex) Format(state fmt.State, verb rune) {
 				jsonData = append(jsonData, data)
 
 			} else {
-				if flagDetail {
-					fmt.Fprintf(str, "#%d %s:%d (%s) ",
+				if "" != err.Error() {
+					fmt.Fprintf(str, "%s ", err.Error())
+				}
+
+				if flagDetail || flagTrace {
+					if "" != err.Error() {
+						fmt.Fprintf(str, "- ")
+					}
+					fmt.Fprintf(str, "#%d %s:%d (%s); ",
 						a,
 						path.Base(err.Caller().File()),
 						err.Caller().Line(),
 						runtime.FuncForPC(err.Caller().Pc()).Name(),
 					)
-					if "" != err.Error() {
-						fmt.Fprintf(str, "- ")
-					}
 				}
 
-				if "" != err.Error() {
-					fmt.Fprintf(str, "%s ", err.Error())
-				}
+				//if flagTrace {
+				//	start := ""
+				//	end := ""
+				//	if flagFormat {
+				//		start = "\t"
+				//		end = "\n"
+				//	}
+				//	if "" != err.Error() && !flagFormat {
+				//		fmt.Fprintf(str, "- ")
+				//	}
+				//	for b, caller := range err.Caller().Trace() {
+				//		fmt.Fprintf(str, "%s#%d %s:%d (%s)%s ",
+				//			start,
+				//			b,
+				//			path.Base(caller.File()),
+				//			caller.Line(),
+				//			runtime.FuncForPC(caller.Pc()).Name(),
+				//			end,
+				//		)
+				//	}
+				//}
 
 				if flagFormat {
+					str = bytes.NewBuffer([]byte(strings.Trim(str.String(), " ")))
 					fmt.Fprintf(str, "\n")
 				}
-
-				if flagTrace {
-					start := ""
-					end := ""
-					if flagFormat {
-						start = "\t"
-						end = "\n"
-					}
-					for b, caller := range err.Caller().Trace() {
-						fmt.Fprintf(str, "%s#%d %s:%d (%s)%s",
-							start,
-							b,
-							path.Base(caller.File()),
-							caller.Line(),
-							runtime.FuncForPC(caller.Pc()).Name(),
-							end,
-						)
-					}
+				if !flagTrace {
+					break
 				}
+			}
+
+			if !flagDetail &&
+				!flagFormat &&
+				!flagTrace &&
+				!modeJSON {
+				break
 			}
 		}
 
@@ -162,5 +177,5 @@ func (e ex) Format(state fmt.State, verb rune) {
 		}
 	}
 
-	fmt.Fprintf(state, "%s", str.String())
+	fmt.Fprintf(state, "%s", strings.Trim(str.String(), "\r\n\t"))
 }

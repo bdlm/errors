@@ -4,10 +4,10 @@ import (
 	"fmt"
 )
 
-// Errorf formats according to a format specifier and returns the string
-// as a value that satisfies error.
+// Errorf formats according to a format specifier and returns an error that
+// contains caller data.
 func Errorf(msg string, data ...interface{}) Err {
-	return New(msg, data...)
+	return New(fmt.Sprintf(msg, data...))
 }
 
 // Has returns whether an error or an error stack stack is or contains the
@@ -23,7 +23,6 @@ func Has(err, test error) bool {
 		return Has(tmp.prev, test)
 	}
 	return err == test
-
 }
 
 // Is returns whether an error or an error stack stack is the referenced
@@ -35,18 +34,17 @@ func Is(err, test error) bool {
 	return err == test
 }
 
-// New formats according to a format specifier and returns the string
-// as a value that satisfies error.
-func New(msg string, data ...interface{}) Err {
+// New returns an error that contains caller data.
+func New(msg string) Err {
 	return ex{
 		caller: NewCaller(),
-		err:    fmt.Errorf(msg, data...),
+		err:    fmt.Errorf(msg),
 	}
 }
 
-// Track updates caller metadata on an error as it's passed back up the
-// stack.
-func Track(e error) Err {
+// Trace adds an additional caller line to the error trace trace on an error
+// to aid in debugging and forensic analysis.
+func Trace(e error) Err {
 	if nil == e {
 		return nil
 	}
@@ -64,6 +62,27 @@ func Track(e error) Err {
 	return ex{
 		caller: clr,
 		err:    e,
+	}
+}
+
+// Track updates the error stack with additional caller data.
+func Track(e error) Err {
+	err, ok := e.(ex)
+	if !ok {
+		err = ex{
+			caller: NewCaller(),
+			err:    e,
+		}
+	}
+
+	return ex{
+		caller: err.caller,
+		err:    err.err,
+		prev: ex{
+			caller: NewCaller(),
+			err:    fmt.Errorf("%s (tracked)", e),
+			prev:   err.prev,
+		},
 	}
 }
 

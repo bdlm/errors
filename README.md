@@ -19,7 +19,7 @@ import (
 )
 ```
 
-One of the most common frustrations with go error handling is the lack of exceptions in the language. You can use the `panic`/`recover` method to simulate the behavior but that's akward, clunky, requires many lines of code, and is hard to follow for many people. It is also very common handle an exception and run additional code or simply use an exception to inform higher-level code about internal behavior from deeper in the call stack.
+One of the most common frustrations with go error handling is the lack of exceptions in the language. You can use the `panic`/`recover` method to simulate the behavior but that's akward, clunky, requires many lines of code, and is hard to follow. It is also very common practice to handle an exception and run additional code or simply use an exception to inform higher-level code about internal behavior from deeper in the call stack.
 
 As Pike says, errors are values, and when `panic`/`recover` isn't a reasonable solution you have to handle passing that information up the stack yourself. Which kind of sucks and leaves us with the `if err != nil` idiom which is fairly useless without a solid pattern behind it.
 
