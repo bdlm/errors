@@ -8,11 +8,11 @@ import (
 )
 
 // MarshalJSON implements the json.Marshaller interface.
-func (e ex) MarshalJSON() ([]byte, error) {
+func (e E) MarshalJSON() ([]byte, error) {
 	jsonData := []map[string]interface{}{}
 
 	for a, b := range list(e) {
-		err, ok := b.(ex)
+		err, ok := b.(E)
 		if !ok {
 			break
 		}

@@ -20,35 +20,35 @@ type Err interface {
 	Unwrap() Err
 }
 
-// ex is a thing
-type ex struct {
+// E is a thing
+type E struct {
 	caller Caller
 	err    error
 	prev   error
 }
 
 // Caller implements Error.
-func (e ex) Caller() Caller {
+func (e E) Caller() Caller {
 	return e.caller
 }
 
 // Error implements Error.
-func (e ex) Error() string {
+func (e E) Error() string {
 	return e.err.Error()
 }
 
 // Has implements Error.
-func (e ex) Has(test error) bool {
+func (e E) Has(test error) bool {
 	return Has(e, test)
 }
 
 // Is implements Error.
-func (e ex) Is(test error) bool {
+func (e E) Is(test error) bool {
 	return Is(e, test)
 }
 
-// Error implements Error.
-func (e ex) Unwrap() Err {
+// Unwrap implements Error.
+func (e E) Unwrap() Err {
 	return Unwrap(e)
 }
 
@@ -57,7 +57,7 @@ func list(e error) []error {
 	ret := []error{}
 
 	if nil != e {
-		if tmp, ok := e.(ex); ok {
+		if tmp, ok := e.(E); ok {
 			ret = append(ret, e)
 			ret = append(ret, list(tmp.prev)...)
 		}
