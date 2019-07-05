@@ -31,5 +31,5 @@ func someWork() error {
 }
 
 func tryAgain() error {
-	return fmt.Errorf("retry failed")
+	return errs.Wrap(loadConfig(), "retry failed")
 }

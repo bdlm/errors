@@ -29,23 +29,6 @@ import (
 //      %#v:   {"error":"An error occurred"}
 //      %#-v:  {"caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)","error":"An error occurred"}
 //      %#+v:  [{"caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/errors_test.TestErrors)","error":"An error occurred"}]
-//      %# v:  {
-//                 "error":"An error occurred"
-//             }
-//      %# -v: {
-//                 "caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)",
-//                 "error":"An error occurred"
-//             }
-//      %# +v: [
-//                 {
-//                     "caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)",
-//                     "error":"An error occurred"
-//                 },
-//                 {
-//                     "caller":"#0 stack_test.go:39 (github.com/bdlm/errors_test.TestErrors)",
-//                     "error":"An error occurred"
-//                 }
-//             ]
 func (e ex) Format(state fmt.State, verb rune) {
 	str := bytes.NewBuffer([]byte{})
 
@@ -125,28 +108,6 @@ func (e ex) Format(state fmt.State, verb rune) {
 						runtime.FuncForPC(err.Caller().Pc()).Name(),
 					)
 				}
-
-				//if flagTrace {
-				//	start := ""
-				//	end := ""
-				//	if flagFormat {
-				//		start = "\t"
-				//		end = "\n"
-				//	}
-				//	if "" != err.Error() && !flagFormat {
-				//		fmt.Fprintf(str, "- ")
-				//	}
-				//	for b, caller := range err.Caller().Trace() {
-				//		fmt.Fprintf(str, "%s#%d %s:%d (%s)%s ",
-				//			start,
-				//			b,
-				//			path.Base(caller.File()),
-				//			caller.Line(),
-				//			runtime.FuncForPC(caller.Pc()).Name(),
-				//			end,
-				//		)
-				//	}
-				//}
 
 				if flagFormat {
 					str = bytes.NewBuffer([]byte(strings.Trim(str.String(), " ")))

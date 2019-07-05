@@ -49,9 +49,7 @@ func Trace(e error) Err {
 		return nil
 	}
 
-	a := NewCaller()
-	clr := a.(caller)
-
+	clr := NewCaller().(caller)
 	if tmp, ok := e.(ex); ok {
 		clr.trace = []Caller{clr.trace[0]}
 		clr.trace = append(clr.trace, tmp.caller.Trace()...)

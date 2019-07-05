@@ -50,8 +50,8 @@ func ExampleFormat_string_trace_formatted() {
 	err := loadConfig()
 	fmt.Printf("% +v", err)
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
-	//could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig);
-	//could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
+	// could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig);
+	// could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
 }
 
 func ExampleFormat_json() {
@@ -115,7 +115,7 @@ func ExampleFormat_json_trace_formatted() {
 	//         "error": "service configuration could not be loaded",
 	//         "trace": [
 	//             "#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)",
-	//             "#1 examples_test.go:111 (github.com/bdlm/errors_test.ExampleFormat_json_trace_debug)",
+	//             "#1 examples_test.go:111 (github.com/bdlm/errors_test.ExampleFormat_json_trace_formatted)",
 	//             "#2 example.go:121 (testing.runExample)",
 	//             "#3 example.go:45 (testing.runExamples)",
 	//             "#4 testing.go:1073 (testing.(*M).Run)",
@@ -129,7 +129,7 @@ func ExampleFormat_json_trace_formatted() {
 	//         "trace": [
 	//             "#0 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)",
 	//             "#1 mocks_test.go:15 (github.com/bdlm/errors_test.loadConfig)",
-	//             "#2 examples_test.go:111 (github.com/bdlm/errors_test.ExampleFormat_json_trace_debug)",
+	//             "#2 examples_test.go:111 (github.com/bdlm/errors_test.ExampleFormat_json_trace_formatted)",
 	//             "#3 example.go:121 (testing.runExample)",
 	//             "#4 example.go:45 (testing.runExamples)",
 	//             "#5 testing.go:1073 (testing.(*M).Run)",
@@ -144,7 +144,7 @@ func ExampleFormat_json_trace_formatted() {
 	//             "#0 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)",
 	//             "#1 mocks_test.go:20 (github.com/bdlm/errors_test.decodeConfig)",
 	//             "#2 mocks_test.go:15 (github.com/bdlm/errors_test.loadConfig)",
-	//             "#3 examples_test.go:111 (github.com/bdlm/errors_test.ExampleFormat_json_trace_debug)",
+	//             "#3 examples_test.go:111 (github.com/bdlm/errors_test.ExampleFormat_json_trace_formatted)",
 	//             "#4 example.go:121 (testing.runExample)",
 	//             "#5 example.go:45 (testing.runExamples)",
 	//             "#6 testing.go:1073 (testing.(*M).Run)",
@@ -154,6 +154,7 @@ func ExampleFormat_json_trace_formatted() {
 	//         ]
 	//     }
 	// ]
+
 }
 
 func ExampleErr_WrapE() {
