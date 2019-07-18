@@ -10,7 +10,6 @@ This release is a complete rewrite of this package. See the [README](README.md) 
   - `GetCaller(err error) Caller`
   - `Has(err, test error) bool`
   - `Is(err, test error) bool`
-  - `New(msg string) Error`
   - `Trace(e error) Error`
   - `Track(e error) Error`
 #### Changed
