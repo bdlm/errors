@@ -19,16 +19,16 @@ import (
 //      #      JSON formatted output, useful for logging
 //      -      Output caller details, useful for troubleshooting
 //      +      Output full error stack details, useful for debugging
-//      ' '    Add whitespace for readability, useful for development
+//      ' '    (space) Add whitespace formatting for readability, useful for development
 //
 // Examples:
 //      %s:    An error occurred
 //      %v:    An error occurred
-//      %-v:   #0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors) - An error occurred
-//      %+v:   #0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors) - An error occurred #1 stack_test.go:39 (github.com/bdlm/errors_test.TestErrors) - An error occurred
+//      %-v:   #0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred
+//      %+v:   #0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred #1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors) - An error occurred
 //      %#v:   {"error":"An error occurred"}
-//      %#-v:  {"caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)","error":"An error occurred"}
-//      %#+v:  [{"caller":"#0 stack_test.go:40 (github.com/bdlm/errors_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/errors_test.TestErrors)","error":"An error occurred"}]
+//      %#-v:  {"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}
+//      %#+v:  [{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}]
 func (e E) Format(state fmt.State, verb rune) {
 	str := bytes.NewBuffer([]byte{})
 
