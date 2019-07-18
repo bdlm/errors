@@ -4,18 +4,18 @@ import (
 	"fmt"
 )
 
+// Errorf formats according to a format specifier and returns an error that
+// contains caller data.
+func Errorf(msg string, data ...interface{}) Error {
+	return New(fmt.Sprintf(msg, data...))
+}
+
 // GetCaller returns the Caller associated with an Error, if any.
 func GetCaller(err error) Caller {
 	if e, ok := err.(Error); ok {
 		return e.Caller()
 	}
 	return nil
-}
-
-// Errorf formats according to a format specifier and returns an error that
-// contains caller data.
-func Errorf(msg string, data ...interface{}) Error {
-	return New(fmt.Sprintf(msg, data...))
 }
 
 // Has returns whether an error or an error stack stack is or contains the
