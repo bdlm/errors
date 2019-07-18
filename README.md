@@ -15,32 +15,38 @@
 
 `go get github.com/bdlm/errors`
 
-One of my biggest frustrations with Go error handling is the lack of forensic and meta information errors can provide. Out of the box errors are just a string and possibly a type. They can't tell you where they occurred or the path through the call stack they followed. The error implementation in Go is robust enough to control program flow but it's not very efficient for troubleshooting or analasys.
+One of the biggest frustrations with Go error handling is the lack of forensic and meta information errors can provide. Out of the box errors are just a string and possibly a type. They can't tell you where they occurred or the path through the call stack they followed. The error implementation in Go is robust enough to control program flow but it's not very efficient for troubleshooting or analasys.
 
-Since the idom in Go is that we pass the error back up the stack anyway (`if nil != err {return err}`) it's trivial to make errors much more informative with a simple error package. `bdlm/errors` makes this easy and supports tracing the call stack and the error callers with relative ease. Custom error types are also fully compatible with this package and can be used freely.
+Since the idom in Go is that we pass the error back up the stack anyway:
+```go
+if nil != err {
+	return err
+}
+```
+it's trivial to make errors much more informative with a simple error package. `bdlm/errors` makes this easy and supports tracing the call stack and the error callers with relative ease. Custom error types are also fully compatible with this package and can be used freely.
 
 ## Quick start
 
 See the [Godoc](https://godoc.org/github.com/bdlm/errors) for more examples.
 
-Create an error
+Create an error:
 ```go
 var MyError = errors.New("My error")
 ```
 
-Create an error using formatting verbs
+Create an error using formatting verbs:
 ```go
 var MyError = errors.Errorf("My error #%d", 1)
 ```
 
-Wrap an error
+Wrap an error:
 ```go
 if nil != err {
 	return errors.Wrap(err, "the operation failed")
 }
 ```
 
-Wrap an error with another error
+Wrap an error with another error:
 ```go
 err := try1()
 if nil != err {
@@ -52,7 +58,7 @@ if nil != err {
 }
 ```
 
-Get the previous error, if any
+Get the previous error, if any:
 ```go
 err := doWork()
 if prevErr := errors.Unwrap(err); nil != prevErr {
@@ -60,7 +66,7 @@ if prevErr := errors.Unwrap(err); nil != prevErr {
 }
 ```
 
-Test for a specific error type
+Test for a specific error type:
 ```go
 var MyError = errors.New("My error")
 func main() {
@@ -71,7 +77,7 @@ func main() {
 }
 ```
 
-Test to see if a specific error type exists anywhere in an error stack
+Test to see if a specific error type exists anywhere in an error stack:
 ```go
 var MyError = errors.New("My error")
 func main() {
@@ -81,6 +87,8 @@ func main() {
 	}
 }
 ```
+
+
 
 ## The `Error` interface
 

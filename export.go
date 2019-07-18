@@ -87,14 +87,15 @@ func Track(e error) Error {
 // Unwrap returns the previous error.
 func Unwrap(e error) Error {
 	if tmp, ok := e.(E); ok {
-		if nil != tmp.prev {
-			if tmp2, ok := tmp.prev.(E); ok {
-				return tmp2
-			}
-			return E{
-				caller: NewCaller(),
-				err:    tmp,
-			}
+		if nil == tmp.prev {
+			return nil
+		}
+		if tmp2, ok := tmp.prev.(E); ok {
+			return tmp2
+		}
+		return E{
+			caller: NewCaller(),
+			err:    tmp.prev,
 		}
 	}
 	return nil
