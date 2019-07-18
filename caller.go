@@ -84,10 +84,9 @@ func (caller caller) Pc() uintptr {
 // String implements Stringer.
 func (caller caller) String() string {
 	return fmt.Sprintf(
-		"%s:%d %s",
-		caller.file,
-		caller.line,
+		"%s:%d",
 		runtime.FuncForPC(caller.pc).Name(),
+		caller.line,
 	)
 }
 
