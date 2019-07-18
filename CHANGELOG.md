@@ -3,8 +3,10 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 # v0.2.0 - 2019-07-17
-This release is a complete rewrite of this package. See the [README](README.md) for full details.
+This release is a full rewrite of the `errors` package. See the [README](README.md) for further details.
 #### Added
+* `Caller` interface
+* `Error` interface
 * Exported methods
   - `Errorf(msg string, data ...interface{}) Error`
   - `GetCaller(err error) Caller`
@@ -12,6 +14,7 @@ This release is a complete rewrite of this package. See the [README](README.md) 
   - `Is(err, test error) bool`
   - `Trace(e error) Error`
   - `Track(e error) Error`
+
 #### Changed
 * Exported methods
   - `New(code std.Code, msg string, data ...interface{}) *Err` => `New(msg string) Error`
@@ -19,6 +22,9 @@ This release is a complete rewrite of this package. See the [README](README.md) 
 #### Removed
 * Exported methods
   - `From(code std.Code, err error) *Err`
+* Support for error codes
+* Support for sanitized vs raw error messages
+* Support for HTTP status codes
 
 
 # v0.1.3 - 2018-10-02
