@@ -25,21 +25,35 @@ func Has(err, test error) bool {
 		return false
 	}
 	if tmp, ok := err.(E); ok {
-		if tmp.err == test {
+		if testTmp, ok := test.(E); ok {
+			if tmp.err == testTmp.err && tmp.err.Error() == testTmp.err.Error() {
+				return true
+			}
+		}
+		if tmp.err == test && tmp.err.Error() == test.Error() {
 			return true
 		}
 		return Has(tmp.prev, test)
 	}
-	return err == test
+	if err == test && err.Error() == test.Error() {
+		return true
+	}
+	return false
 }
 
 // Is returns whether an error or an error stack stack is the referenced
 // error type.
 func Is(err, test error) bool {
-	if tmp, ok := err.(E); ok {
-		return tmp.err == test
+	if nil == err || nil == test {
+		return false
 	}
-	return err == test
+	if tmp, ok := err.(E); ok {
+		if tmpTest, ok := test.(E); ok {
+			return tmp.err == tmpTest.err && tmp.err.Error() == tmpTest.err.Error()
+		}
+		return tmp.err == test && tmp.err.Error() == test.Error()
+	}
+	return err == test && err.Error() == test.Error()
 }
 
 // New returns an error that contains caller data.
@@ -73,6 +87,10 @@ func Trace(e error) Error {
 
 // Track updates the error stack with additional caller data.
 func Track(e error) Error {
+	if nil == e {
+		return nil
+	}
+
 	err, ok := e.(E)
 	if !ok {
 		err = E{
