@@ -88,7 +88,14 @@ func main() {
 }
 ```
 
-
+Iterate through an error stack:
+```go
+err := doWork()
+for nil != err {
+	fmt.Println(err)
+	err = errors.Unwrap(err)
+}
+```
 
 ## The `Error` interface
 
@@ -131,152 +138,6 @@ type Caller interface {
 
 	// Trace returns the call stack.
 	Trace() []Caller
-}
-```
-
-
-
-## Error stacks
-
-An error stack is an array of errors.
-
-### Create a new stack
-
-```go
-if !someWork() {
-    err := errs.New("validation failed")
-}
-```
-
-### Base a new stack off any error
-
-```go
-if err := someWork(); nil != err {
-	return errs.Wrap(err, "could not read configuration")
-}
-```
-
-## Define a new error with an error code
-
-Creating a new error defines the root of a backtrace.
-```go
-_, err := ioutil.ReadAll(r)
-if err != nil {
-	return errs.New("read failed")
-}
-```
-
-## Adding context to an error
-
-The errors.Wrap function returns a new error stack, adding context as the top error in the stack:
-
-```go
-data, err := ioutil.ReadAll(r)
-if err != nil {
-	return errs.Wrap(err, "read failed")
-}
-```
-
-In this case, if the original `err` is not an instance of `Err`, that error becomes the root of the error stack.
-
-## Building an error stack
-
-Most cases will build a stack trace off a series of errors returned from the call stack:
-
-```go
-import (
-	"fmt"
-
-	errs "github.com/bdlm/errors"
-)
-
-const (
-	// Error codes below 1000 are reserved future use by the
-	// "github.com/bdlm/errors" package.
-	ConfigurationNotValid errs.Code = iota + 1000
-)
-
-func loadConfig() error {
-	err := decodeConfig()
-	return errs.Wrap(err, ConfigurationNotValid, "service configuration could not be loaded")
-}
-
-func decodeConfig() error {
-	err := readConfig()
-	return errs.Wrap(err, errs.ErrInvalidJSON, "could not decode configuration data")
-}
-
-func readConfig() error {
-	err := fmt.Errorf("read: end of input")
-	return errs.Wrap(err, errs.ErrEOF, "could not read configuration file")
-}
-
-func someWork() error {
-	return fmt.Errorf("failed to do work")
-}
-```
-
-But for cases where a set of errors need to be captured from a single procedure, the `Add()` call can be used. The with call adds an error to the stack behind the lead error:
-
-```go
-import (
-	errs "github.com/bdlm/errors"
-)
-
-func doSteps() error {
-	var errStack errs.Err
-
-	err := doStep1()
-	if nil != err {
-		errStack.Add(err, "step 1 failed")
-	}
-
-
-	err = doStep2()
-	if nil != err {
-		errStack.Add(err, "step 2 failed")
-	}
-
-	err = doStep3()
-	if nil != err {
-		errStack.Add(err, "step 3 failed")
-	}
-
-	return errStack
-}
-```
-
-## Root cause of an error stack
-
-Retrieving the root cause of an error stack is straightforward:
-
-```go
-log.Println(err.(errs.Error).Cause())
-```
-
-You can easily switch on the type of any error in the stack (including the causer) as usual:
-
-```go
-switch err.(errs.Error).Cause().(type) {
-case MyError:
-        // handle specifically
-default:
-        // handle generically
-}
-```
-
-## Iterating the error stack
-
-Becase an error stack is just an array of errors iterating through it is trivial:
-
-```go
-for _, e := range err.(errs.Error).Stack() {
-	fmt.Println(e.Code())
-	fmt.Println(e.Error())
-	fmt.Println(e.Msg())  // In the case of Wrap(), it is possible to suppliment
-	                      // an error with additional information, which is
-	                      // returned by Msg(). Otherwise, Msg() returns the same
-	                      // string as Error().
 }
 ```
 
