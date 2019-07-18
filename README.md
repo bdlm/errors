@@ -33,26 +33,24 @@ All notable changes to this project are documented in the [`CHANGELOG`](CHANGELO
 go get github.com/bdlm/errors
 ```
 
-See the [documentation](https://godoc.org/github.com/bdlm/errors) for more examples.
-
-Create an error:
+#### Create an error
 ```go
 var MyError = errors.New("My error")
 ```
 
-Create an error using formatting verbs:
+#### Create an error using formatting verbs
 ```go
 var MyError = errors.Errorf("My error #%d", 1)
 ```
 
-Wrap an error:
+#### Wrap an error
 ```go
 if nil != err {
 	return errors.Wrap(err, "the operation failed")
 }
 ```
 
-Wrap an error with another error:
+#### Wrap an error with another error
 ```go
 err := try1()
 if nil != err {
@@ -64,7 +62,7 @@ if nil != err {
 }
 ```
 
-Get the previous error, if any:
+#### Get the previous error, if any
 ```go
 err := doWork()
 if prevErr := errors.Unwrap(err); nil != prevErr {
@@ -72,7 +70,7 @@ if prevErr := errors.Unwrap(err); nil != prevErr {
 }
 ```
 
-Test for a specific error type:
+#### Test for a specific error type
 ```go
 var MyError = errors.New("My error")
 func main() {
@@ -83,7 +81,7 @@ func main() {
 }
 ```
 
-Test to see if a specific error type exists anywhere in an error stack:
+#### Test to see if a specific error type exists anywhere in an error stack
 ```go
 var MyError = errors.New("My error")
 func main() {
@@ -94,7 +92,7 @@ func main() {
 }
 ```
 
-Iterate through an error stack:
+#### Iterate through an error stack
 ```go
 err := doWork()
 for nil != err {
@@ -102,6 +100,11 @@ for nil != err {
 	err = errors.Unwrap(err)
 }
 ```
+
+#
+
+See the [documentation](https://godoc.org/github.com/bdlm/errors) for more examples.
+
 
 ## The `Error` interface
 
