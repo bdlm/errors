@@ -25,7 +25,12 @@ See the [Godoc](https://godoc.org/github.com/bdlm/errors) for more examples.
 
 Create an error
 ```go
-var MyError = errors.Errorf("My error")
+var MyError = errors.New("My error")
+```
+
+Create an error using formatting verbs
+```go
+var MyError = errors.Errorf("My error #%d", 1)
 ```
 
 Wrap an error
@@ -47,10 +52,34 @@ if nil != err {
 }
 ```
 
-Get the previous error
+Get the previous error, if any
 ```go
-err := doWork() // returns a wrapped error
-prevErr := errors.Unwrap(err)
+err := doWork()
+if prevErr := errors.Unwrap(err); nil != prevErr {
+	...
+}
+```
+
+Test for a specific error type
+```go
+var MyError = errors.New("My error")
+func main() {
+	err := doWork()
+	if errors.Is(err, MyError) {
+		...
+	}
+}
+```
+
+Test to see if a specific error type exists anywhere in an error stack
+```go
+var MyError = errors.New("My error")
+func main() {
+	err := doWork()
+	if errors.Has(err, MyError) {
+		...
+	}
+}
 ```
 
 ## The `Error` interface
