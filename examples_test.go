@@ -22,19 +22,19 @@ func ExampleE_Format_string() {
 	// Output: service configuration could not be loaded
 }
 
-func ExampleE_Format_preformat() {
+func ExampleE_Format_stringPreformat() {
 	err := loadConfig()
 	fmt.Printf("% v", err)
 	// Output: service configuration could not be loaded
 }
 
-func ExampleE_Format_detail() {
+func ExampleE_Format_stringDetail() {
 	err := loadConfig()
 	fmt.Printf("%-v", err)
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
 }
 
-func ExampleE_Format_preformatDetail() {
+func ExampleE_Format_stringPreformatDetail() {
 	err := loadConfig()
 	fmt.Printf("% -v", err)
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
