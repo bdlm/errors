@@ -34,7 +34,7 @@ func ExampleE_Format_detail() {
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
 }
 
-func ExampleE_Format_preformatdetail() {
+func ExampleE_Format_preformatDetail() {
 	err := loadConfig()
 	fmt.Printf("% -v", err)
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
@@ -46,7 +46,7 @@ func ExampleE_Format_json() {
 	// Output: [{"error":"service configuration could not be loaded"},{"error":"could not decode configuration data"},{"error":"could not read configuration file"}]
 }
 
-func ExampleE_Format_jsonpreformat() {
+func ExampleE_Format_jsonPreformat() {
 	err := loadConfig()
 	fmt.Printf("% #v", err)
 	// Output: [
@@ -62,13 +62,13 @@ func ExampleE_Format_jsonpreformat() {
 	// ]
 }
 
-func ExampleE_Format_jsondetail() {
+func ExampleE_Format_jsonDetail() {
 	err := loadConfig()
 	fmt.Printf("%#-v", err)
 	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)","error":"service configuration could not be loaded"},{"caller":"#1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)","error":"could not decode configuration data"},{"caller":"#2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)","error":"could not read configuration file"}]
 }
 
-func ExampleE_Format_jsonpreformatdetail() {
+func ExampleE_Format_jsonPreformatDetail() {
 	err := loadConfig()
 	fmt.Printf("% #-v", err)
 	// Output: [

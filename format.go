@@ -15,7 +15,7 @@ import (
 //     %s      Returns the error string of the last error added
 //     %v      Alias for %s
 //
-//  Flags:
+// Flags:
 //      #      JSON formatted output, useful for logging
 //      -      Output caller details, useful for troubleshooting
 //      +      Output full error stack details, useful for debugging
