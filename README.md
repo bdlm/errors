@@ -13,8 +13,6 @@
 
 `bdlm/errors` provides simple, concise, useful error handling and annotation.
 
-`go get github.com/bdlm/errors`
-
 One of the biggest frustrations with Go error handling is the lack of forensic and meta information errors can provide. Out of the box errors are just a string and possibly a type. They can't tell you where they occurred or the path through the call stack they followed. The error implementation in Go is robust enough to control program flow but it's not very efficient for troubleshooting or analasys.
 
 Since the idom in Go is that we pass the error back up the stack anyway:
@@ -30,6 +28,8 @@ it's trivial to make errors much more informative with a simple error package. `
 All notable changes to this project are documented in the [`CHANGELOG`](CHANGELOG.md). The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Quick start
+
+`go get github.com/bdlm/errors`
 
 See the [Godoc](https://godoc.org/github.com/bdlm/errors) for more examples.
 
