@@ -1,147 +1,120 @@
 package errors_test
 
 import (
-	"errors"
 	"fmt"
 
-	errs "github.com/bdlm/errors"
+	errors "github.com/bdlm/errors"
 )
 
 var errEOF = fmt.Errorf("read: end of input")
 var otherErr = fmt.Errorf("some other process failed")
 
 func ExampleNew() {
-	var err error
+	err := errors.New("this is an error message")
 
-	// If an error code isn't used or doesn't have a corresponding
-	// ErrCode defined, the error message is returned.
-	err = errs.New(0, "this is an error message")
 	fmt.Println(err)
-
-	// If an error with a corresponding ErrCode is specified, the
-	// user-safe error string mapped to the error code is returned,
-	// along with the code.
-	err = errs.New(errs.ErrFatal, "this is an error message")
-	fmt.Println(err)
-
-	// Output: 0000: An unknown error occurred
-	//0001: A fatal error occurred
-
+	// Output: this is an error message
 }
 
-func ExampleWrap_backtrace() {
-	// To build up an error stack, add context to each error before
-	// returning it up the call stack.
+func ExampleE_Format_string() {
+	err := loadConfig()
+	fmt.Println(err)
+	// Output: service configuration could not be loaded
+}
+
+func ExampleE_Format_string_preformat() {
+	err := loadConfig()
+	fmt.Printf("% v", err)
+	// Output: service configuration could not be loaded
+}
+
+func ExampleE_Format_string_detail() {
+	err := loadConfig()
+	fmt.Printf("%-v", err)
+	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
+}
+
+func ExampleE_Format_string_detail_preformat() {
+	err := loadConfig()
+	fmt.Printf("% -v", err)
+	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
+}
+
+func ExampleE_Format_json() {
+	err := loadConfig()
+	fmt.Printf("%#v", err)
+	// Output: [{"error":"service configuration could not be loaded"},{"error":"could not decode configuration data"},{"error":"could not read configuration file"}]
+}
+
+func ExampleE_Format_json_preformat() {
+	err := loadConfig()
+	fmt.Printf("% #v", err)
+	// Output: [
+	//     {
+	//         "error": "service configuration could not be loaded"
+	//     },
+	//     {
+	//         "error": "could not decode configuration data"
+	//     },
+	//     {
+	//         "error": "could not read configuration file"
+	//     }
+	// ]
+}
+
+func ExampleE_Format_json_detail() {
+	err := loadConfig()
+	fmt.Printf("%#-v", err)
+	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)","error":"service configuration could not be loaded"},{"caller":"#1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)","error":"could not decode configuration data"},{"caller":"#2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)","error":"could not read configuration file"}]
+}
+
+func ExampleE_Format_json_detail_preformat() {
+	err := loadConfig()
+	fmt.Printf("% #-v", err)
+	// Output: [
+	//     {
+	//         "caller": "#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)",
+	//         "error": "service configuration could not be loaded"
+	//     },
+	//     {
+	//         "caller": "#1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)",
+	//         "error": "could not decode configuration data"
+	//     },
+	//     {
+	//         "caller": "#2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)",
+	//         "error": "could not read configuration file"
+	//     }
+	// ]
+}
+
+func ExampleUnwrap() {
+	err1 := errors.New("error 1")
+	err2 := errors.Wrap(err1, "error 2")
+	err := errors.Unwrap(err2)
+
+	fmt.Println(err)
+	// Output: error 1
+}
+
+func ExampleWrap() {
+	// Wrap an error with additional metadata.
+	err := loadConfig()
+	err = errors.Wrap(err, "loadConfig returned an error")
+
+	fmt.Println(err)
+	// Output: loadConfig returned an error
+}
+
+func ExampleWrapE() {
+	// Wrap an error with another error.
 	err := loadConfig()
 	if nil != err {
-		err = errs.Wrap(err, 0, "failed to load configuration")
-	}
-
-	// The %v formatting verb can be used to print out the stack trace
-	// in various ways. The %v verb is the default and prints out the
-	// standard error message.
-	fmt.Println(err)
-
-	// The %-v verb is useful for logging and prints the trace on a
-	// single line.
-	fmt.Printf("%-v\n\n", err)
-
-	// The %#v verb prints each cause in the stack on a separate line.
-	fmt.Printf("%#v\n\n", err)
-
-	// The %+v verb prints a verbose detailed backtrace intended for
-	// human consumption.
-	fmt.Printf("%+v\n\n", err)
-
-	// Output: 0000: An unknown error occurred
-	// #4 - "failed to load configuration" examples_test.go:37 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: failed to load configuration} #3 - "service configuration could not be loaded" mocks_test.go:31 `github.com/bdlm/errors_test.loadConfig` {1000: the configuration is invalid} #2 - "could not decode configuration data" mocks_test.go:36 `github.com/bdlm/errors_test.decodeConfig` {0208: could not decode configuration data} #1 - "could not read configuration file" mocks_test.go:41 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF} #0 - "read: end of input" mocks_test.go:41 `github.com/bdlm/errors_test.readConfig` {0000: read: end of input}
-	//
-	// #4 - "failed to load configuration" examples_test.go:37 `github.com/bdlm/errors_test.ExampleWrap_backtrace` {0000: failed to load configuration}
-	// #3 - "service configuration could not be loaded" mocks_test.go:31 `github.com/bdlm/errors_test.loadConfig` {1000: the configuration is invalid}
-	// #2 - "could not decode configuration data" mocks_test.go:36 `github.com/bdlm/errors_test.decodeConfig` {0208: could not decode configuration data}
-	// #1 - "could not read configuration file" mocks_test.go:41 `github.com/bdlm/errors_test.readConfig` {0100: unexpected EOF}
-	// #0 - "read: end of input" mocks_test.go:41 `github.com/bdlm/errors_test.readConfig` {0000: read: end of input}
-	//
-	// #4: `github.com/bdlm/errors_test.ExampleWrap_backtrace`
-	// 	error:   failed to load configuration
-	// 	line:    examples_test.go:37
-	// 	code:    0000: failed to load configuration
-	// 	message: 0000: An unknown error occurred
-	// #3: `github.com/bdlm/errors_test.loadConfig`
-	// 	error:   service configuration could not be loaded
-	// 	line:    mocks_test.go:31
-	// 	code:    1000: the configuration is invalid
-	// 	message: 1000: Configuration not valid
-	// #2: `github.com/bdlm/errors_test.decodeConfig`
-	// 	error:   could not decode configuration data
-	// 	line:    mocks_test.go:36
-	// 	code:    0208: could not decode configuration data
-	// 	message: 0208: could not decode configuration data
-	// #1: `github.com/bdlm/errors_test.readConfig`
-	// 	error:   could not read configuration file
-	// 	line:    mocks_test.go:41
-	// 	code:    0100: unexpected EOF
-	// 	message: 0100: End of input
-	// #0: `github.com/bdlm/errors_test.readConfig`
-	// 	error:   read: end of input
-	// 	line:    mocks_test.go:41
-	// 	code:    0000: read: end of input
-	// 	message: 0000: An unknown error occurred
-}
-
-func ExampleFrom() {
-	// Converting an error from another package into an error stack is
-	// straightforward.
-	err := errors.New("my error")
-	if _, ok := err.(*errs.Err); !ok {
-		err = errs.From(0, err)
-	}
-
-	fmt.Println(err)
-	fmt.Println(err.(*errs.Err).Detail())
-
-	// Output: 0000: An unknown error occurred
-	//my error
-}
-
-func ExampleErr_With() {
-	// To add to an error stack without modifying the leading cause, add
-	// additional errors to the stack with the With() method.
-	err := loadConfig()
-	if nil != err {
-		if e, ok := err.(*errs.Err); nil != err && ok {
-			err = e.With(errs.New(0, "failed to load configuration"), "loadConfig returned an error")
-		} else {
-			err = errs.From(0, err)
+		retryErr := tryAgain()
+		if nil != retryErr {
+			err = errors.WrapE(err, retryErr)
 		}
 	}
 
 	fmt.Println(err)
-	// Output: 1000: Configuration not valid
-}
-
-func ExampleDetail() {
-	err := loadConfig()
-	if nil != err {
-		err = errs.Wrap(err, 0, "failed to load configuration")
-	}
-
-	// The single-line condensed stack trace is also availabe via the
-	// Detail() method
-	fmt.Println(err.(*errs.Err).Detail())
-
-	// Output: failed to load configuration
-}
-
-func ExampleHTTPStatus() {
-	err := loadConfig()
-	if nil != err {
-		err = errs.Wrap(err, ConfigurationNotValid, "failed to load configuration")
-	}
-
-	// HTTPStatus() returns the HTTP status code associated with an error
-	// code, if any.
-	fmt.Println(err.(*errs.Err).HTTPStatus())
-
-	// Output: 500
+	// Output: retry failed
 }

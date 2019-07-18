@@ -1,203 +1,87 @@
 /*
-Package errors is inspired by `pkg/errors` (https://github.com/pkg/errors)
-and uses a similar API but adds support for error codes. Error codes are
-always optional.
+Package errors provides simple, concise, useful error handling and annotation.
 
 	import (
 		errs "github.com/mkenney/go-errors"
 	)
 
-Error stacks
+One of the biggest frustrations with Go error handling is the lack of forensic and meta
+information errors can provide. Out of the box errors are just a string and possibly a type.
+They can't tell you where they occurred or the path through the call stack they followed.
+The error implementation in Go is robust enough to control program flow but it's not very
+efficient for troubleshooting or analasys.
 
-An error stack is an array of errors.
+Since the idom in Go is that we pass the error back up the stack anyway:
 
-Create a new stack
-
-	if !decodeSomeJSON() {
-		err := errs.New("validation failed")
+	if nil != err {
+		return err
 	}
 
-Base a new stack off any error
+it's trivial to make errors much more informative with a simple error package. This package
+makes this easy and supports tracing the call stack and the error callers with relative
+ease. Custom error types are also fully compatible with this package and can be used freely.
 
-	err := decodeSomeJSON()
-	err = errs.Wrap(err, "could not read configuration")
+Quick start
 
-Define error codes
+Create an error:
 
-Adding support for error codes is the primary motivation behind this
-project. See `codes.go` (https://github.com/mkenney/go-errors/blob/master/codes.go).
-`HTTPStatus` is optional and a convenience property that allows
-automation of HTTP status responses based on internal error codes. The
-`Code` definition associated with error at the top of the stack (most
-recent error) should be used for HTTP status output.
+	var MyError = errors.New("My error")
 
-	import (
-		errs "github.com/mkenney/go-errors"
-	)
+Create an error using formatting verbs:
 
-	const (
-		// Error codes below 1000 are reserved future use by the errors
-		// package.
-		UserError errs.Code = iota + 1000
-		InternalError
-	)
+	var MyError = errors.Errorf("My error #%d", 1)
 
-	func init() {
-		errs.Codes[UserError] = errs.Metadata{
-			Internal:   "bad user input",
-			External:   "A user error occurred",
-			HTTPStatus: 400,
+
+Wrap an error:
+
+	if nil != err {
+		return errors.Wrap(err, "the operation failed")
+	}
+
+Wrap an error with another error:
+
+	err := try1()
+	if nil != err {
+		err2 := try2()
+		if nil != err2 {
+			return errors.Wrap(err, err2)
 		}
-		errs.Codes[InternalError] = errs.Metadata{
-			Internal:   "could not save data",
-			External:   "An internal server occurred",
-			HTTPStatus: 500,
-		}
+		return err
 	}
 
-	func SomeFunc() error {
-		return errs.New("SomeFunc failed because of things", InternalError)
+Get the previous error, if any:
+
+	err := doWork()
+	if prevErr := errors.Unwrap(err); nil != prevErr {
+		...
 	}
 
-Define a new error with an error code
+Test for a specific error type:
 
-Creating a new error defines the root of a backtrace.
-
-	_, err := ioutil.ReadAll(r)
-	if err != nil {
-		return errs.New("read failed", errs.ErrUnknown)
-	}
-
-Adding context to an error
-
-The errors.Wrap function returns a new error that adds context to the
-original error and starts an error stack:
-
-	_, err := ioutil.ReadAll(r)
-	if err != nil {
-		return errs.Wrap(err, "read failed", errs.ErrUnknown)
-	}
-
-In this case, if the original `err` is not an instance of `Stack`, that
-error becomes the root of the error stack.
-
-Building an error stack
-
-Most cases will build a stack trace off a series of errors returned from
-the call stack:
-
-	import (
-		"fmt"
-		errs "github.com/mkenney/go-errors"
-	)
-
+	var MyError = errors.New("My error")
 	func main() {
-		err := loadConfig()
-		fmt.Printf("%#v", err)
-	}
-
-	func readConfig() error {
-		err := fmt.Errorf("read: end of input")
-		return errs.Wrap(err, "could not read configuration file", errs.ErrEOF)
-	}
-
-	func decodeConfig() error {
-		err := readConfig()
-		return errs.Wrap(err, "could not decode configuration data", errs.ErrInvalidJSON)
-	}
-
-	func loadConfig() error {
-		err := decodeConfig()
-		return errs.Wrap(err, "service configuration could not be loaded", errs.ErrFatal)
-	}
-
-But for cases where a set of errors need to be captured from a single
-procedure, the `With()` call can be used. The with call adds an error to
-the stack behind the leading error:
-
-	import (
-		errs "github.com/mkenney/go-errors"
-	)
-
-	func doSteps() error {
-		var errStack errs.Err
-
-		err := doStep1()
-		if nil != err {
-			errStack.With(err, "step 1 failed")
+		err := doWork()
+		if errors.Is(err, MyError) {
+			...
 		}
-
-
-		err = doStep2()
-		if nil != err {
-			errStack.With(err, "step 2 failed")
-		}
-
-		err = doStep3()
-		if nil != err {
-			errStack.With(err, "step 3 failed")
-		}
-
-		return errStack
 	}
 
-Root cause of an error stack
+Test to see if a specific error type exists anywhere in an error stack:
 
-Retrieving the root cause of an error stack is straightforward:
-
-	log.Println(err.(errs.Stack).Cause())
-
-Similar to `pkg/errors`, you can easily switch on the type of any error
-in the stack (including the causer):
-
-	switch err.(errs.Err).Cause().(type) {
-	case *MyError:
-			// handle specifically
-	default:
-			// unknown error
+	var MyError = errors.New("My error")
+	func main() {
+		err := doWork()
+		if errors.Has(err, MyError) {
+			...
+		}
 	}
 
-Output formats
+Iterate through an error stack:
 
-The Formatter interface has been implemented to provide access to a
-stack trace with the `%v` verb.
-
-Standard error output, use with error codes to ensure appropriate
-user-facing messages `%s`:
-
-	0002: Internal Server Error
-
-Single-line stack trace, useful for logging `%v`:
-
-	#0 - "service configuration could not be loaded" example_test.go:22 `github.com/mkenney/go-errors_test.loadConfig` {0002: a fatal error occurred} #1 - "could not decode configuration data" example_test.go:17 `github.com/mkenney/go-errors_test.decodeConfig` {0200: invalid JSON data could not be decoded} #2 - "could not read configuration file" example_test.go:12 `github.com/mkenney/go-errors_test.readConfig` {0100: unexpected EOF}
-
-Multi-line condensed stack trace `%#v`:
-
-	#0 - "service configuration could not be loaded" example_test.go:22 `github.com/mkenney/go-errors_test.loadConfig` {0002: a fatal error occurred}
-	#1 - "could not decode configuration data" example_test.go:17 `github.com/mkenney/go-errors_test.decodeConfig` {0200: invalid JSON data could not be decoded}
-	#2 - "could not read configuration file" example_test.go:12 `github.com/mkenney/go-errors_test.readConfig` {0100: unexpected EOF}
-
-Multi-line detailed stack trace `%+v`:
-
-	#0: `github.com/mkenney/go-errors_test.loadConfig`
-		error:   service configuration could not be loaded
-		line:    example_test.go:22
-		code:    2 - a fatal error occurred
-		entry:   17741072
-		message: Internal Server Error
-
-	#1: `github.com/mkenney/go-errors_test.decodeConfig`
-		error:   could not decode configuration data
-		line:    example_test.go:17
-		code:    200 - invalid JSON data could not be decoded
-		entry:   17740848
-		message: Invalid JSON Data
-
-	#2: `github.com/mkenney/go-errors_test.readConfig`
-		error:   could not read configuration file
-		line:    example_test.go:12
-		code:    100 - unexpected EOF
-		entry:   17740576
-		message: End of input
+	err := doWork()
+	for nil != err {
+		fmt.Println(err)
+		err = errors.Unwrap(err)
+	}
 */
 package errors

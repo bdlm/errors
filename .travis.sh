@@ -1,9 +1,25 @@
 #!/bin/sh
 set -e
 
+exit_code=0
+
+go get -u golang.org/x/lint/golint
+[ "0" = "$?" ] || exit 1
+
+for dir in $(go list ./... | grep -v vendor); do
+    echo "golint $dir"
+    result=$(golint $dir)
+    if [ "" != "$result" ]; then
+        echo $result
+        exit_code=5
+    fi
+    if [ "0" != "$exit_code" ]; then
+        exit $exit_code
+    fi
+done
+
 rm -f coverage.txt
-for dir in $(go list ./...); do
-    echo "go test -timeout 20s -coverprofile=profile.out $dir"
+for dir in $(go list ./... | grep -v vendor); do
     go test -race -timeout 20s -coverprofile=profile.out $dir
     exit_code=$?
     if [ "0" != "$exit_code" ]; then
@@ -14,4 +30,5 @@ for dir in $(go list ./...); do
         rm profile.out
     fi
 done
+
 exit $exit_code

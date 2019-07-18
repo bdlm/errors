@@ -4,90 +4,93 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
-
-	std "github.com/bdlm/std/error"
 )
 
-/*
-Call implements bdlm/std/error.Caller, holding runtime.Caller data.
-*/
-type Call struct {
-	loaded bool
-	file   string
-	line   int
-	ok     bool
-	pc     uintptr
+// Caller holds runtime.Caller data.
+type Caller interface {
+	// File returns the file in which the call occurred.
+	File() string
+
+	// Func returns the name of the function in which the call occurred.
+	Func() string
+
+	// Line returns the line number in the file in which the call occurred.
+	Line() int
+
+	// Pc returns the program counter.
+	Pc() uintptr
+
+	// Trace returns the call stack.
+	Trace() []Caller
 }
 
-/*
-File implements bdlm/std/error.Caller, returning the caller file name.
-*/
-func (call Call) File() string {
-	return call.file
+// caller holds runtime.Caller data.
+type caller struct {
+	file  string
+	line  int
+	ok    bool
+	pc    uintptr
+	trace []Caller
 }
 
-/*
-Line implements bdlm/std/error.Caller, returning the caller line number.
-*/
-func (call Call) Line() int {
-	return call.line
-}
-
-/*
-Ok implements bdlm/std/error.Caller, returning whether the caller data was
-successfully recovered.
-*/
-func (call Call) Ok() bool {
-	return call.ok
-}
-
-/*
-Pc implements bdlm/std/error.Caller, returning the caller program counter.
-*/
-func (call Call) Pc() uintptr {
-	return call.pc
-}
-
-/*
-String implements the Stringer interface
-*/
-func (call Call) String() string {
-	return fmt.Sprintf(
-		"%s:%d %s",
-		call.file,
-		call.line,
-		runtime.FuncForPC(call.pc).Name(),
-	)
-}
-
-func getCaller() std.Caller {
-	var caller Call
+// NewCaller returns a new caller instance containing data for the current
+// call stack.
+func NewCaller() Caller {
+	trace := []Caller{}
+	clr := caller{}
 	a := 0
 	for {
-		if caller.pc, caller.file, caller.line, caller.ok = runtime.Caller(a); caller.ok {
-			if !strings.Contains(strings.ToLower(caller.file), "github.com/bdlm/errors") ||
-				strings.HasSuffix(strings.ToLower(caller.file), "_test.go") {
-				break
+		traceCaller := caller{}
+		if traceCaller.pc, traceCaller.file, traceCaller.line, traceCaller.ok = runtime.Caller(a); traceCaller.ok {
+			if !strings.Contains(strings.ToLower(traceCaller.file), "github.com/bdlm/errors") ||
+				strings.HasSuffix(strings.ToLower(traceCaller.file), "_test.go") {
+				trace = append(trace, traceCaller)
+				if !clr.ok {
+					clr.pc = traceCaller.pc
+					clr.file = traceCaller.file
+					clr.line = traceCaller.line
+					clr.ok = traceCaller.ok
+				}
 			}
 		} else {
 			break
 		}
 		a++
 	}
-	return caller
+	clr.trace = trace
+	return clr
 }
 
-func getTrace() std.Trace {
-	var trace std.Trace
-	var caller Call
-	a := 0
-	for {
-		if caller.pc, caller.file, caller.line, caller.ok = runtime.Caller(a); caller.ok {
-			trace = append(trace, caller)
-		} else {
-			break
-		}
-		a++
-	}
-	return trace
+// File implements Caller.
+func (caller caller) File() string {
+	return caller.file
+}
+
+// Func implements Caller.
+func (caller caller) Func() string {
+	return runtime.FuncForPC(caller.pc).Name()
+}
+
+// Line implements Caller.
+func (caller caller) Line() int {
+	return caller.line
+}
+
+// Pc implements Caller.
+func (caller caller) Pc() uintptr {
+	return caller.pc
+}
+
+// String implements Stringer.
+func (caller caller) String() string {
+	return fmt.Sprintf(
+		"%s:%d",
+		runtime.FuncForPC(caller.pc).Name(),
+		caller.line,
+	)
+}
+
+// Trace implements Caller.
+func (caller caller) Trace() []Caller {
+	return caller.trace
 }
