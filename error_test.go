@@ -81,7 +81,7 @@ func TestETrace(t *testing.T) {
 	err := errors.New("test 1")
 	err = errors.Trace(err)
 
-	assert.Equal(83, err.Caller().Line(), "caller did not reflect the correct line number")
+	assert.Equal(82, err.Caller().Line(), "caller did not reflect the correct line number")
 	assert.Equal("github.com/bdlm/errors_test.TestETrace", err.Caller().Func(), "caller did not reflect the correct function name")
 
 	err = errors.Trace(nil)
@@ -94,10 +94,10 @@ func TestETrack(t *testing.T) {
 	err := errors.New("test 1")
 	err = errors.Track(err)
 
-	assert.Equal(95, err.Caller().Line(), "caller did not reflect the correct line number")
+	assert.Equal(94, err.Caller().Line(), "caller did not reflect the correct line number")
 	assert.Equal("github.com/bdlm/errors_test.TestETrack", err.Caller().Func(), "caller did not reflect the correct function name")
 
-	assert.Equal(96, errors.Unwrap(err).Caller().Line(), "caller did not reflect the correct line number")
+	assert.Equal(95, errors.Unwrap(err).Caller().Line(), "caller did not reflect the correct line number")
 	assert.Equal("github.com/bdlm/errors_test.TestETrack", errors.Unwrap(err).Caller().Func(), "caller did not reflect the correct function name")
 
 	err = errors.Track(nil)
