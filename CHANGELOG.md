@@ -17,8 +17,10 @@ This release is a full rewrite of the `errors` package. See the [README](README.
 
 #### Changed
 * Exported methods
-  - `New(code std.Code, msg string, data ...interface{}) *Err` => `New(msg string) Error`
-  - `Wrap(err error, code std.Code, msg string, data ...interface{}) *Err` => `Wrap(e error, msg string, data ...interface{}) Error`
+  - `New(code std.Code, msg string, data ...interface{}) *Err`
+    - `New(msg string) Error`
+  - `Wrap(err error, code std.Code, msg string, data ...interface{}) *Err`
+    - `Wrap(e error, msg string, data ...interface{}) Error`
 #### Removed
 * Exported methods
   - `From(code std.Code, err error) *Err`
