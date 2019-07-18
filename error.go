@@ -1,7 +1,7 @@
 package errors
 
-// Err defines the error interface.
-type Err interface {
+// Error defines the error interface.
+type Error interface {
 	// Caller returns the associated Caller instance.
 	Caller() Caller
 
@@ -17,7 +17,7 @@ type Err interface {
 	Is(test error) bool
 
 	// Unwrap returns the next error, if any.
-	Unwrap() Err
+	Unwrap() Error
 }
 
 // E is a thing
@@ -48,7 +48,7 @@ func (e E) Is(test error) bool {
 }
 
 // Unwrap implements Error.
-func (e E) Unwrap() Err {
+func (e E) Unwrap() Error {
 	return Unwrap(e)
 }
 

@@ -3,14 +3,14 @@ package errors_test
 import (
 	"fmt"
 
-	errs "github.com/bdlm/errors"
+	errors "github.com/bdlm/errors"
 )
 
 var errEOF = fmt.Errorf("read: end of input")
 var otherErr = fmt.Errorf("some other process failed")
 
 func ExampleNew() {
-	err := errs.New("this is an error message")
+	err := errors.New("this is an error message")
 
 	fmt.Println(err)
 	// Output: this is an error message
@@ -87,25 +87,34 @@ func ExampleE_Format_json_detail_preformat() {
 	// ]
 }
 
+func ExampleUnwrap() {
+	err1 := errors.New("error 1")
+	err2 := errors.Wrap(err1, "error 2")
+	err := errors.Unwrap(err2)
+
+	fmt.Println(err)
+	// Output: error 1
+}
+
+func ExampleWrap() {
+	// Wrap an error with additional metadata.
+	err := loadConfig()
+	err = errors.Wrap(err, "loadConfig returned an error")
+
+	fmt.Println(err)
+	// Output: loadConfig returned an error
+}
+
 func ExampleWrapE() {
-	// To add to an error with another error.
+	// Wrap an error with another error.
 	err := loadConfig()
 	if nil != err {
 		retryErr := tryAgain()
 		if nil != retryErr {
-			err = errs.WrapE(err, retryErr)
+			err = errors.WrapE(err, retryErr)
 		}
 	}
 
 	fmt.Println(err)
 	// Output: retry failed
-}
-
-func ExampleWrap() {
-	// To add to an error with another error.
-	err := loadConfig()
-	err = errs.WrapE(err, fmt.Errorf("loadConfig returned an error"))
-
-	fmt.Println(err)
-	// Output: loadConfig returned an error
 }

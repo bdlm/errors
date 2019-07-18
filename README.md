@@ -11,26 +11,91 @@
 	<a href="https://godoc.org/github.com/bdlm/errors"><img src="https://godoc.org/github.com/bdlm/errors?status.svg" alt="GoDoc"></a>
 </p>
 
-`bdlm/errors` is inspired by [`pkg/errors`](https://github.com/pkg/errors) and uses a similar API.
+`bdlm/errors` provides simple, concise, useful error handling and annotation.
 
+`go get github.com/bdlm/errors`
+
+One of my biggest frustrations with Go error handling is the lack of forensic and meta information errors can provide. Out of the box errors are just a string and possibly a type. They can't tell you where they occurred or the path through the call stack they followed. The error implementation in Go is robust enough to control program flow but it's not very efficient for troubleshooting or analasys.
+
+Since the idom in Go is that we pass the error back up the stack anyway (`if nil != err {return err}`) it's trivial to make errors much more informative with a simple error package. `bdlm/errors` makes this easy and supports tracing the call stack and the error callers with relative ease. Custom error types are also fully compatible with this package and can be used freely.
+
+## Quick start
+
+See the [Godoc](https://godoc.org/github.com/bdlm/errors) for more examples.
+
+Create an error
 ```go
-import (
-	errs "github.com/bdlm/errors"
-)
+var MyError = errors.Errorf("My error")
 ```
 
-One of the most common frustrations with go error handling is the lack of exceptions in the language. You can use the `panic`/`recover` method to simulate the behavior but that's akward, clunky, requires many lines of code, and is hard to follow.
+Wrap an error
+```go
+if nil != err {
+	return errors.Wrap(err, "the operation failed")
+}
+```
 
-As Pike says, errors are values, and when `panic`/`recover` isn't a reasonable solution you have to handle passing that information up the stack yourself. Which kind of sucks and leaves us with the `if err != nil` idiom which is fairly useless without a solid pattern behind it.
+Wrap an error with another error
+```go
+err := try1()
+if nil != err {
+	err2 := try2()
+	if nil != err2 {
+		return errors.Wrap(err, err2)
+	}
+	return err
+}
+```
 
-Since the idom is that we handle the error all the way up the stack anyway, it's trivial to make errors much more informative with a good error package. The `bdlm/errors` package makes this simple and supports tracing the call stack and the error callers.
+Get the previous error
+```go
+err := doWork() // returns a wrapped error
+prevErr := errors.Unwrap(err)
+```
 
-Custom error types are fully compatible with this package as well and can be used freely.
+## The `Error` interface
 
-## The `Err` interface
+The exported package methods return an interface that exposes additional metadata and troubleshooting information:
 
-The exported methods return an interface that exposes additional metadata and
+```go
+// Error defines the error interface.
+type Error interface {
+	// Caller returns the associated Caller instance.
+	Caller() Caller
 
+	// Error implements error.
+	Error() string
+
+	// Has tests to see if the test error exists anywhere in the error
+	// stack.
+	Has(test error) bool
+
+	// Is tests to see if the test error matches most recent error in the
+	// stack.
+	Is(test error) bool
+
+	// Unwrap returns the next error, if any.
+	Unwrap() Error
+}
+
+// Caller holds runtime.Caller data.
+type Caller interface {
+	// File returns the file in which the call occurred.
+	File() string
+
+	// Func returns the name of the function in which the call occurred.
+	Func() string
+
+	// Line returns the line number in the file in which the call occurred.
+	Line() int
+
+	// Pc returns the program counter.
+	Pc() uintptr
+
+	// Trace returns the call stack.
+	Trace() []Caller
+}
+```
 
 
 

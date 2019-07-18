@@ -6,7 +6,7 @@ import (
 
 // Errorf formats according to a format specifier and returns an error that
 // contains caller data.
-func Errorf(msg string, data ...interface{}) Err {
+func Errorf(msg string, data ...interface{}) Error {
 	return New(fmt.Sprintf(msg, data...))
 }
 
@@ -35,7 +35,7 @@ func Is(err, test error) bool {
 }
 
 // New returns an error that contains caller data.
-func New(msg string) Err {
+func New(msg string) Error {
 	return E{
 		caller: NewCaller(),
 		err:    fmt.Errorf(msg),
@@ -44,7 +44,7 @@ func New(msg string) Err {
 
 // Trace adds an additional caller line to the error trace trace on an error
 // to aid in debugging and forensic analysis.
-func Trace(e error) Err {
+func Trace(e error) Error {
 	if nil == e {
 		return nil
 	}
@@ -64,7 +64,7 @@ func Trace(e error) Err {
 }
 
 // Track updates the error stack with additional caller data.
-func Track(e error) Err {
+func Track(e error) Error {
 	err, ok := e.(E)
 	if !ok {
 		err = E{
@@ -85,7 +85,7 @@ func Track(e error) Err {
 }
 
 // Unwrap returns the previous error.
-func Unwrap(e error) Err {
+func Unwrap(e error) Error {
 	if tmp, ok := e.(E); ok {
 		if nil != tmp.prev {
 			if tmp2, ok := tmp.prev.(E); ok {
@@ -101,12 +101,12 @@ func Unwrap(e error) Err {
 }
 
 // Wrap returns a new error that wraps the provided error.
-func Wrap(e error, msg string, data ...interface{}) Err {
+func Wrap(e error, msg string, data ...interface{}) Error {
 	return WrapE(e, fmt.Errorf(msg, data...))
 }
 
 // WrapE returns a new error that wraps the provided error.
-func WrapE(e, err error) Err {
+func WrapE(e, err error) Error {
 	return E{
 		caller: NewCaller(),
 		err:    err,
