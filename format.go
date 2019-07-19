@@ -58,6 +58,7 @@ func (e E) Format(state fmt.State, verb rune) {
 		}
 
 		jsonData := []map[string]interface{}{}
+		sp := ""
 
 		for a, b := range list(e) {
 			err, ok := b.(E)
@@ -78,30 +79,18 @@ func (e E) Format(state fmt.State, verb rune) {
 				if "" != err.Error() {
 					data["error"] = err.Error()
 				}
-				//if flagTrace {
-				//	trace := []string{}
-				//	for b, caller := range err.Caller().Trace() {
-				//		trace = append(trace, fmt.Sprintf("#%d %s:%d (%s)",
-				//			b,
-				//			path.Base(caller.File()),
-				//			caller.Line(),
-				//			runtime.FuncForPC(caller.Pc()).Name(),
-				//		))
-				//	}
-				//	data["trace"] = trace
-				//}
 				jsonData = append(jsonData, data)
 
 			} else {
 				if "" != err.Error() {
-					fmt.Fprintf(str, "%s ", err.Error())
+					fmt.Fprintf(str, "%s%s", sp, err.Error())
 				}
 
 				if flagDetail || flagTrace {
 					if "" != err.Error() {
-						fmt.Fprintf(str, "- ")
+						fmt.Fprintf(str, " - ")
 					}
-					fmt.Fprintf(str, "#%d %s:%d (%s); ",
+					fmt.Fprintf(str, "#%d %s:%d (%s);",
 						a,
 						path.Base(err.Caller().File()),
 						err.Caller().Line(),
@@ -112,6 +101,8 @@ func (e E) Format(state fmt.State, verb rune) {
 				if flagFormat {
 					str = bytes.NewBuffer([]byte(strings.Trim(str.String(), " ")))
 					fmt.Fprintf(str, "\n")
+				} else if flagTrace {
+					sp = " "
 				}
 			}
 
