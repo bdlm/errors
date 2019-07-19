@@ -158,8 +158,11 @@ func ExampleWrap() {
 	err := loadConfig()
 	err = errors.Wrap(err, "loadConfig returned an error")
 
-	fmt.Println(err)
-	// Output: loadConfig returned an error
+	fmt.Printf("% +v", err)
+	// Output: loadConfig returned an error - #0 examples_test.go:159 (github.com/bdlm/errors_test.ExampleWrap);
+	// service configuration could not be loaded - #1 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
+	// could not decode configuration data - #2 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig);
+	// could not read configuration file - #3 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
 }
 
 func ExampleWrapE() {
@@ -174,23 +177,9 @@ func ExampleWrapE() {
 		err = errors.WrapE(err, internalServerError)
 	}
 
-	fmt.Printf("% #+v", err)
-	// Output: [
-	//     {
-	//         "caller": "#0 examples_test.go:169 (github.com/bdlm/errors_test.ExampleWrapE)",
-	//         "error": "rpc error: code = Internal desc = internal server error"
-	//     },
-	//     {
-	//         "caller": "#1 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)",
-	//         "error": "service configuration could not be loaded"
-	//     },
-	//     {
-	//         "caller": "#2 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)",
-	//         "error": "could not decode configuration data"
-	//     },
-	//     {
-	//         "caller": "#3 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)",
-	//         "error": "could not read configuration file"
-	//     }
-	// ]
+	fmt.Printf("% +v", err)
+	// Output: rpc error: code = Internal desc = internal server error - #0 examples_test.go:177 (github.com/bdlm/errors_test.ExampleWrapE);
+	// service configuration could not be loaded - #1 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
+	// could not decode configuration data - #2 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig);
+	// could not read configuration file - #3 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
 }
