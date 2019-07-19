@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	grpcCodes "google.golang.org/grpc/codes"
+	grpcErrors "google.golang.org/grpc/status"
+
 	errors "github.com/bdlm/errors"
 )
 
@@ -160,15 +163,34 @@ func ExampleWrap() {
 }
 
 func ExampleWrapE() {
-	// Wrap an error with another error.
+	var internalServerError = grpcErrors.Error(
+		grpcCodes.Internal,
+		"internal server error",
+	)
+
+	// Wrap an error with another error to maintain context.
 	err := loadConfig()
 	if nil != err {
-		retryErr := tryAgain()
-		if nil != retryErr {
-			err = errors.WrapE(err, retryErr)
-		}
+		err = errors.WrapE(err, internalServerError)
 	}
 
-	fmt.Println(err)
-	// Output: retry failed
+	fmt.Printf("% #+v", err)
+	// Output: [
+	//     {
+	//         "caller": "#0 examples_test.go:169 (github.com/bdlm/errors_test.ExampleWrapE)",
+	//         "error": "rpc error: code = Internal desc = internal server error"
+	//     },
+	//     {
+	//         "caller": "#1 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)",
+	//         "error": "service configuration could not be loaded"
+	//     },
+	//     {
+	//         "caller": "#2 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)",
+	//         "error": "could not decode configuration data"
+	//     },
+	//     {
+	//         "caller": "#3 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)",
+	//         "error": "could not read configuration file"
+	//     }
+	// ]
 }
