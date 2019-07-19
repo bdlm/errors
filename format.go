@@ -67,7 +67,7 @@ func (e E) Format(state fmt.State, verb rune) {
 
 			if modeJSON {
 				data := map[string]interface{}{}
-				if flagDetail {
+				if flagDetail || flagTrace {
 					data["caller"] = fmt.Sprintf("#%d %s:%d (%s)",
 						a,
 						path.Base(err.Caller().File()),
@@ -78,18 +78,18 @@ func (e E) Format(state fmt.State, verb rune) {
 				if "" != err.Error() {
 					data["error"] = err.Error()
 				}
-				if flagTrace {
-					trace := []string{}
-					for b, caller := range err.Caller().Trace() {
-						trace = append(trace, fmt.Sprintf("#%d %s:%d (%s)",
-							b,
-							path.Base(caller.File()),
-							caller.Line(),
-							runtime.FuncForPC(caller.Pc()).Name(),
-						))
-					}
-					data["trace"] = trace
-				}
+				//if flagTrace {
+				//	trace := []string{}
+				//	for b, caller := range err.Caller().Trace() {
+				//		trace = append(trace, fmt.Sprintf("#%d %s:%d (%s)",
+				//			b,
+				//			path.Base(caller.File()),
+				//			caller.Line(),
+				//			runtime.FuncForPC(caller.Pc()).Name(),
+				//		))
+				//	}
+				//	data["trace"] = trace
+				//}
 				jsonData = append(jsonData, data)
 
 			} else {
@@ -113,9 +113,10 @@ func (e E) Format(state fmt.State, verb rune) {
 					str = bytes.NewBuffer([]byte(strings.Trim(str.String(), " ")))
 					fmt.Fprintf(str, "\n")
 				}
-				if !flagTrace {
-					break
-				}
+			}
+
+			if !flagTrace {
+				break
 			}
 
 			if !flagDetail &&

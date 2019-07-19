@@ -86,6 +86,11 @@ func TestHas(t *testing.T) {
 	typedErr = errors.Wrap(typedErr, "test 3")
 	assert.True(errors.Has(typedErr, testErr), "typedErr does not contain testErr")
 
+	testErr = fmt.Errorf("test 1")
+	err = errors.Wrap(testErr, "test 2")
+	err = errors.Wrap(err, "test 3")
+	assert.True(errors.Has(err, testErr), "err does not contain testErr")
+
 	assert.False(errors.Has(nil, testErr), "nil did not evaluate to false")
 }
 
