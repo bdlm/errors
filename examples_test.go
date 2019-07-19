@@ -41,12 +41,12 @@ func ExampleE_Format_stringTrace() {
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig); could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig); could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
 }
 
-func ExampleE_Format_stringPreformatDetail() {
+func ExampleE_Format_stringDetailPreformat() {
 	err := loadConfig()
 	fmt.Printf("% -v", err)
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
 }
-func ExampleE_Format_stringPreformatTrace() {
+func ExampleE_Format_stringTracePreformat() {
 	err := loadConfig()
 	fmt.Printf("% +v", err)
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
@@ -76,7 +76,7 @@ func ExampleE_Format_jsonDetail() {
 	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)","error":"service configuration could not be loaded"}]
 }
 
-func ExampleE_Format_jsonPreformatDetail() {
+func ExampleE_Format_jsonDetailPreformat() {
 	err := loadConfig()
 	fmt.Printf("% #-v", err)
 	// Output: [
@@ -93,7 +93,7 @@ func ExampleE_Format_jsonTrace() {
 	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)","error":"service configuration could not be loaded"},{"caller":"#1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)","error":"could not decode configuration data"},{"caller":"#2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)","error":"could not read configuration file"}]
 }
 
-func ExampleE_Format_jsonPreformatTrace() {
+func ExampleE_Format_jsonTracePreformat() {
 	err := loadConfig()
 	fmt.Printf("% #+v", err)
 	// Output: [
@@ -112,7 +112,7 @@ func ExampleE_Format_jsonPreformatTrace() {
 	// ]
 }
 
-func ExampleE_MarshalJSON() {
+func ExampleE_MarshalJSON_marshal() {
 	err := loadConfig()
 	jsn, _ := json.Marshal(err)
 
@@ -120,7 +120,7 @@ func ExampleE_MarshalJSON() {
 	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)","error":"service configuration could not be loaded"},{"caller":"#1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)","error":"could not decode configuration data"},{"caller":"#2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)","error":"could not read configuration file"}]
 }
 
-func ExampleE_MarshalJSON_indent() {
+func ExampleE_MarshalJSON_marshalIndent() {
 	err := loadConfig()
 	jsn, _ := json.MarshalIndent(err, "", "    ")
 
