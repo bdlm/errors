@@ -9,7 +9,7 @@ One of the biggest frustrations with Go error handling is the lack of forensic a
 information errors can provide. Out of the box errors are just a string and possibly a type.
 They can't tell you where they occurred or the path through the call stack they followed.
 The error implementation in Go is robust enough to control program flow but it's not very
-efficient for troubleshooting or analasys.
+efficient for troubleshooting or analysis.
 
 Since the idom in Go is that we pass the error back up the stack anyway:
 

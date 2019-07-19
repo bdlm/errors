@@ -1,6 +1,7 @@
 package errors
 
-// Error defines the error interface.
+// Error defines the interface for accessing the details of an error managed
+// by this package.
 type Error interface {
 	// Caller returns the associated Caller instance.
 	Caller() Caller
@@ -20,7 +21,8 @@ type Error interface {
 	Unwrap() Error
 }
 
-// E is a thing
+// E is an Error interface implementation and simply wraps the exported
+// methods as a convenience.
 type E struct {
 	caller Caller
 	err    error

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Caller holds runtime.Caller data.
+// Caller holds runtime.Caller data for an error.
 type Caller interface {
 	// File returns the file in which the call occurred.
 	File() string
@@ -81,7 +81,7 @@ func (caller caller) Pc() uintptr {
 	return caller.pc
 }
 
-// String implements Stringer.
+// String implements fmt.Stringer.
 func (caller caller) String() string {
 	return fmt.Sprintf(
 		"%s:%d",
