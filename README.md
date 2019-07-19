@@ -29,6 +29,8 @@ All notable changes to this project are documented in the [`CHANGELOG`](CHANGELO
 
 ## Quick start
 
+See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples.
+
 ```
 go get github.com/bdlm/errors
 ```
@@ -103,7 +105,7 @@ for nil != err {
 
 #
 
-See the [documentation](https://godoc.org/github.com/bdlm/errors) for more examples.
+See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples.
 
 
 ## The `Error` interface
