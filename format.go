@@ -42,6 +42,9 @@ func (e E) Format(state fmt.State, verb rune) {
 			flagFormat bool
 			flagTrace  bool
 			modeJSON   bool
+			lastE      error
+			key        int
+			nextE      error
 		)
 
 		if state.Flag('#') {
@@ -60,52 +63,8 @@ func (e E) Format(state fmt.State, verb rune) {
 		jsonData := []map[string]interface{}{}
 		sp := ""
 
-		for a, b := range list(e) {
-			err, ok := b.(E)
-			if !ok {
-				break
-			}
-
-			if modeJSON {
-				data := map[string]interface{}{}
-				if flagDetail || flagTrace {
-					data["caller"] = fmt.Sprintf("#%d %s:%d (%s)",
-						a,
-						path.Base(err.Caller().File()),
-						err.Caller().Line(),
-						runtime.FuncForPC(err.Caller().Pc()).Name(),
-					)
-				}
-				if "" != err.Error() {
-					data["error"] = err.Error()
-				}
-				jsonData = append(jsonData, data)
-
-			} else {
-				if "" != err.Error() {
-					fmt.Fprintf(str, "%s%s", sp, err.Error())
-				}
-
-				if flagDetail || flagTrace {
-					if "" != err.Error() {
-						fmt.Fprintf(str, " - ")
-					}
-					fmt.Fprintf(str, "#%d %s:%d (%s);",
-						a,
-						path.Base(err.Caller().File()),
-						err.Caller().Line(),
-						runtime.FuncForPC(err.Caller().Pc()).Name(),
-					)
-				}
-
-				if flagFormat {
-					str = bytes.NewBuffer([]byte(strings.Trim(str.String(), " ")))
-					fmt.Fprintf(str, "\n")
-				} else if flagTrace {
-					sp = " "
-				}
-			}
-
+		for key, nextE = range list(e) {
+			sp, jsonData, str = format(key, nextE, sp, jsonData, str, flagDetail, flagFormat, flagTrace, modeJSON)
 			if !flagTrace {
 				break
 			}
@@ -116,8 +75,14 @@ func (e E) Format(state fmt.State, verb rune) {
 				!modeJSON {
 				break
 			}
-		}
 
+			if err, ok := nextE.(E); ok {
+				lastE = err.prev
+			}
+		}
+		if nil != lastE {
+			sp, jsonData, str = format(key+1, lastE, sp, jsonData, str, flagDetail, flagFormat, flagTrace, modeJSON)
+		}
 		if modeJSON {
 			var byts []byte
 			if flagFormat {
@@ -131,4 +96,61 @@ func (e E) Format(state fmt.State, verb rune) {
 	}
 
 	fmt.Fprintf(state, "%s", strings.Trim(str.String(), "\r\n\t"))
+}
+
+func format(key int, nextE error, sp string, jsonData []map[string]interface{}, str *bytes.Buffer, flagDetail bool, flagFormat bool, flagTrace bool, modeJSON bool) (string, []map[string]interface{}, *bytes.Buffer) {
+	err, ok := nextE.(E)
+
+	if modeJSON {
+		data := map[string]interface{}{}
+		if flagDetail || flagTrace {
+			if ok {
+				data["caller"] = fmt.Sprintf("#%d %s:%d (%s)",
+					key,
+					path.Base(err.Caller().File()),
+					err.Caller().Line(),
+					runtime.FuncForPC(err.Caller().Pc()).Name(),
+				)
+			} else {
+				data["caller"] = fmt.Sprintf("#%d n/a",
+					key,
+				)
+			}
+		}
+		if "" != nextE.Error() {
+			data["error"] = nextE.Error()
+		}
+		jsonData = append(jsonData, data)
+
+	} else {
+		if "" != nextE.Error() {
+			fmt.Fprintf(str, "%s%s", sp, nextE.Error())
+		}
+
+		if flagDetail || flagTrace {
+			if "" != nextE.Error() {
+				fmt.Fprintf(str, " - ")
+			}
+			if ok {
+				fmt.Fprintf(str, "#%d %s:%d (%s);",
+					key,
+					path.Base(err.Caller().File()),
+					err.Caller().Line(),
+					runtime.FuncForPC(err.Caller().Pc()).Name(),
+				)
+			} else {
+				fmt.Fprintf(str, "#%d n/a",
+					key,
+				)
+			}
+		}
+
+		if flagFormat {
+			str = bytes.NewBuffer([]byte(strings.Trim(str.String(), " ")))
+			fmt.Fprintf(str, "\n")
+		} else if flagTrace {
+			sp = " "
+		}
+	}
+	return sp, jsonData, str
 }

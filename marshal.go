@@ -24,7 +24,7 @@ func (e E) MarshalJSON() ([]byte, error) {
 				runtime.FuncForPC(err.Caller().Pc()).Name(),
 			)
 		} else {
-			data["caller"] = fmt.Sprintf("#%d unknown",
+			data["caller"] = fmt.Sprintf("#%d n/a",
 				key,
 			)
 		}
