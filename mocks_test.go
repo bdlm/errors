@@ -8,7 +8,7 @@ examples.
 import (
 	"fmt"
 
-	errs "github.com/bdlm/errors"
+	errs "github.com/bdlm/errors/v2"
 )
 
 func loadConfig() error {
