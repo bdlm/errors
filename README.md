@@ -58,7 +58,7 @@ err := try1()
 if nil != err {
 	err2 := try2()
 	if nil != err2 {
-		return errors.Wrap(err, err2)
+		return errors.WrapE(err, err2)
 	}
 	return err
 }
