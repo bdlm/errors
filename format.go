@@ -34,7 +34,7 @@ func (e E) Format(state fmt.State, verb rune) {
 
 	switch verb {
 	default:
-		fmt.Fprintf(str, e.Error())
+		fmt.Fprint(str, e.Error())
 
 	case 'v':
 		var (
@@ -81,7 +81,7 @@ func (e E) Format(state fmt.State, verb rune) {
 			}
 		}
 		if nil != lastE {
-			sp, jsonData, str = format(key+1, lastE, sp, jsonData, str, flagDetail, flagFormat, flagTrace, modeJSON)
+			_, jsonData, str = format(key+1, lastE, sp, jsonData, str, flagDetail, flagFormat, flagTrace, modeJSON)
 		}
 		if modeJSON {
 			var byts []byte

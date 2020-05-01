@@ -7,11 +7,8 @@ import (
 	grpcCodes "google.golang.org/grpc/codes"
 	grpcErrors "google.golang.org/grpc/status"
 
-	errors "github.com/bdlm/errors/v2"
+	"github.com/bdlm/errors/v2"
 )
-
-var errEOF = fmt.Errorf("read: end of input")
-var otherErr = fmt.Errorf("some other process failed")
 
 func ExampleNew() {
 	err := errors.New("this is an error message")
@@ -174,7 +171,7 @@ func ExampleUnwrap_iterateStack() {
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig); could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig); could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #3 n/a
 	// could not decode configuration data - #0 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig); could not read configuration file - #1 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #2 n/a
 	// could not read configuration file - #0 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #1 n/a
-	// read: end of input - #0 examples_test.go:171 (github.com/bdlm/errors/v2_test.ExampleUnwrap_iterateStack);
+	// read: end of input - #0 examples_test.go:168 (github.com/bdlm/errors/v2_test.ExampleUnwrap_iterateStack);
 }
 
 func ExampleWrap() {
@@ -183,7 +180,7 @@ func ExampleWrap() {
 	err = errors.Wrap(err, "loadConfig returned an error")
 
 	fmt.Printf("% +v", err)
-	// Output: loadConfig returned an error - #0 examples_test.go:183 (github.com/bdlm/errors/v2_test.ExampleWrap);
+	// Output: loadConfig returned an error - #0 examples_test.go:180 (github.com/bdlm/errors/v2_test.ExampleWrap);
 	// service configuration could not be loaded - #1 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig);
 	// could not decode configuration data - #2 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig);
 	// could not read configuration file - #3 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig);
@@ -203,7 +200,7 @@ func ExampleWrapE() {
 	}
 
 	fmt.Printf("% +v", err)
-	// Output: rpc error: code = Internal desc = internal server error - #0 examples_test.go:202 (github.com/bdlm/errors/v2_test.ExampleWrapE);
+	// Output: rpc error: code = Internal desc = internal server error - #0 examples_test.go:199 (github.com/bdlm/errors/v2_test.ExampleWrapE);
 	// service configuration could not be loaded - #1 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig);
 	// could not decode configuration data - #2 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig);
 	// could not read configuration file - #3 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig);

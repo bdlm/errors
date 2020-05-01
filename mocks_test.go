@@ -25,11 +25,3 @@ func readConfig() error {
 	err := fmt.Errorf("read: end of input")
 	return errs.Wrap(err, "could not read configuration file")
 }
-
-func someWork() error {
-	return fmt.Errorf("failed to do work")
-}
-
-func tryAgain() error {
-	return errs.Wrap(loadConfig(), "retry failed")
-}
