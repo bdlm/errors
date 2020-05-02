@@ -8,7 +8,7 @@ examples.
 import (
 	"fmt"
 
-	errs "github.com/bdlm/errors"
+	errs "github.com/bdlm/errors/v2"
 )
 
 func loadConfig() error {
@@ -24,12 +24,4 @@ func decodeConfig() error {
 func readConfig() error {
 	err := fmt.Errorf("read: end of input")
 	return errs.Wrap(err, "could not read configuration file")
-}
-
-func someWork() error {
-	return fmt.Errorf("failed to do work")
-}
-
-func tryAgain() error {
-	return errs.Wrap(loadConfig(), "retry failed")
 }

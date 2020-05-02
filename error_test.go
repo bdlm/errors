@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bdlm/errors"
+	"github.com/bdlm/errors/v2"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +19,7 @@ func TestMarshaller(t *testing.T) {
 	byts, err := json.Marshal(err)
 	assert.Equal(nil, err, "err is not nil")
 	assert.Equal(
-		"[{\"caller\":\"#0 error_test.go:18 (github.com/bdlm/errors_test.TestMarshaller)\",\"error\":\"test 1\"}]",
+		"[{\"caller\":\"#0 error_test.go:18 (github.com/bdlm/errors/v2_test.TestMarshaller)\",\"error\":\"test 1\"}]",
 		string(byts),
 		"JSON did not encode properly",
 	)
@@ -32,7 +32,7 @@ func TestTrace(t *testing.T) {
 	err = errors.Trace(err)
 
 	assert.Equal(32, err.Caller().Line(), "caller did not reflect the correct line number")
-	assert.Equal("github.com/bdlm/errors_test.TestTrace", err.Caller().Func(), "caller did not reflect the correct function name")
+	assert.Equal("github.com/bdlm/errors/v2_test.TestTrace", err.Caller().Func(), "caller did not reflect the correct function name")
 
 	err = errors.Trace(nil)
 	assert.Equal(nil, err, "err is not nil")
@@ -45,10 +45,10 @@ func TestTrack(t *testing.T) {
 	err = errors.Track(err)
 
 	assert.Equal(44, err.Caller().Line(), "caller did not reflect the correct line number")
-	assert.Equal("github.com/bdlm/errors_test.TestTrack", err.Caller().Func(), "caller did not reflect the correct function name")
+	assert.Equal("github.com/bdlm/errors/v2_test.TestTrack", err.Caller().Func(), "caller did not reflect the correct function name")
 
 	assert.Equal(45, errors.Unwrap(err).Caller().Line(), "caller did not reflect the correct line number")
-	assert.Equal("github.com/bdlm/errors_test.TestTrack", errors.Unwrap(err).Caller().Func(), "caller did not reflect the correct function name")
+	assert.Equal("github.com/bdlm/errors/v2_test.TestTrack", errors.Unwrap(err).Caller().Func(), "caller did not reflect the correct function name")
 
 	err = errors.Track(nil)
 	assert.Equal(nil, err, "err is not nil")
@@ -58,9 +58,9 @@ func TestCallerString(t *testing.T) {
 	assert := assert.New(t)
 
 	err := errors.New("test 1")
-	caller := errors.GetCaller(err)
+	caller := errors.Caller(err)
 
-	assert.Equal("github.com/bdlm/errors_test.TestCallerString:60", caller.(fmt.Stringer).String(), "caller.String() did not return the correct output")
+	assert.Equal("github.com/bdlm/errors/v2_test.TestCallerString:60", caller.(fmt.Stringer).String(), "caller.String() did not return the correct output")
 }
 
 func TestHas(t *testing.T) {
@@ -169,16 +169,16 @@ func TestErrorf(t *testing.T) {
 	assert.Equal("test 1", err.Error(), "err is not 'test 1'")
 }
 
-func TestGetCaller(t *testing.T) {
+func TestCaller(t *testing.T) {
 	var err error
 	assert := assert.New(t)
 
 	err = errors.New("test 1")
-	caller := errors.GetCaller(err)
+	caller := errors.Caller(err)
 	assert.NotEqual(nil, caller, "caller is nil")
 
 	err = nil
-	caller = errors.GetCaller(err)
+	caller = errors.Caller(err)
 	assert.Equal(nil, caller, "caller is not nil")
 }
 

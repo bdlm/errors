@@ -1,15 +1,20 @@
 # errors
 
-<p align="center">
-	<a href="https://github.com/bdlm/errors/blob/master/LICENSE"><img src="https://img.shields.io/github/license/bdlm/errors.svg" alt="BSD-3-Clause"></a>
-	<a href="https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta"><img src="https://img.shields.io/badge/stability-beta-33bbff.svg" alt="Beta"></a>
-	<a href="https://travis-ci.org/bdlm/errors"><img src="https://travis-ci.org/bdlm/errors.svg?branch=master" alt="Build status"></a>
-	<a href="https://codecov.io/gh/bdlm/errors"><img src="https://img.shields.io/codecov/c/github/bdlm/errors/master.svg" alt="Coverage status"></a>
-	<a href="https://goreportcard.com/report/github.com/bdlm/errors"><img src="https://goreportcard.com/badge/github.com/bdlm/errors" alt="Go Report Card"></a>
-	<a href="https://github.com/bdlm/errors/issues"><img src="https://img.shields.io/github/issues-raw/bdlm/errors.svg" alt="Github issues"></a>
-	<a href="https://github.com/bdlm/errors/pulls"><img src="https://img.shields.io/github/issues-pr/bdlm/errors.svg" alt="Github pull requests"></a>
-	<a href="https://godoc.org/github.com/bdlm/errors"><img src="https://godoc.org/github.com/bdlm/errors?status.svg" alt="GoDoc"></a>
-</p>
+<a href="https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#mature"><img src="https://img.shields.io/badge/stability-mature-008000.svg" alt="Mature"></a> This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). This package is considered mature, you should expect package stability in <strong>Minor</strong> and <strong>Patch</strong> version releases
+
+- **Major**: backwards incompatible package updates
+- **Minor**: feature additions
+- **Patch**: bug fixes, backward compatible model and function changes, etc.
+
+**[CHANGELOG](CHANGELOG.md)**<br>
+
+<a href="https://pkg.go.dev/github.com/bdlm/errors#pkg-examples"><img src="https://godoc.org/github.com/bdlm/errors?status.svg" alt="GoDoc"></a>
+<a href="https://travis-ci.org/bdlm/errors"><img src="https://travis-ci.org/bdlm/errors.svg?branch=master" alt="Build status"></a>
+<a href="https://codecov.io/gh/bdlm/errors"><img src="https://img.shields.io/codecov/c/github/bdlm/errors/master.svg" alt="Coverage status"></a>
+<a href="https://goreportcard.com/report/github.com/bdlm/errors"><img src="https://goreportcard.com/badge/github.com/bdlm/errors" alt="Go Report Card"></a>
+<a href="https://github.com/bdlm/errors/issues"><img src="https://img.shields.io/github/issues-raw/bdlm/errors.svg" alt="Github issues"></a>
+<a href="https://github.com/bdlm/errors/pulls"><img src="https://img.shields.io/github/issues-pr/bdlm/errors.svg" alt="Github pull requests"></a>
+<a href="https://github.com/bdlm/errors/blob/master/LICENSE"><img src="https://img.shields.io/github/license/bdlm/errors.svg" alt="MIT"></a>
 
 `bdlm/errors` provides simple, concise, useful error handling and annotation.
 
@@ -29,7 +34,7 @@ All notable changes to this project are documented in the [`CHANGELOG`](CHANGELO
 
 ## Quick start
 
-See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples.
+See the [documentation](https://pkg.go.dev/github.com/bdlm/errors#pkg-examples) for more examples. All exported methods work with any `error` type as well as `nil` values.
 
 ```
 go get github.com/bdlm/errors
@@ -110,10 +115,10 @@ See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) f
 
 ## The `Error` interface
 
-The exported package methods return an interface that exposes additional metadata and troubleshooting information:
+The exported package methods return `github.com/bdlm/std/v2/errors` interfaces that expose metadata and troubleshooting information:
 
 ```go
-// Error defines the error interface.
+// Error defines a robust error stack interface.
 type Error interface {
 	// Caller returns the associated Caller instance.
 	Caller() Caller
@@ -133,7 +138,7 @@ type Error interface {
 	Unwrap() Error
 }
 
-// Caller holds runtime.Caller data.
+// Caller defines an interface to runtime caller results.
 type Caller interface {
 	// File returns the file in which the call occurred.
 	File() string
@@ -148,6 +153,9 @@ type Caller interface {
 	Pc() uintptr
 
 	// Trace returns the call stack.
-	Trace() []Caller
+	Trace() Trace
 }
+
+// Trace defines an error trace.
+type Trace []Caller
 ```

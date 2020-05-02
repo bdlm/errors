@@ -7,11 +7,8 @@ import (
 	grpcCodes "google.golang.org/grpc/codes"
 	grpcErrors "google.golang.org/grpc/status"
 
-	errors "github.com/bdlm/errors"
+	"github.com/bdlm/errors/v2"
 )
-
-var errEOF = fmt.Errorf("read: end of input")
-var otherErr = fmt.Errorf("some other process failed")
 
 func ExampleNew() {
 	err := errors.New("this is an error message")
@@ -35,26 +32,27 @@ func ExampleE_Format_stringPreformat() {
 func ExampleE_Format_stringDetail() {
 	err := loadConfig()
 	fmt.Printf("%-v", err)
-	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
+	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig);
 }
 
 func ExampleE_Format_stringTrace() {
 	err := loadConfig()
 	fmt.Printf("%+v", err)
-	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig); could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig); could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
+	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig); could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig); could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #3 n/a
 }
 
 func ExampleE_Format_stringDetailPreformat() {
 	err := loadConfig()
 	fmt.Printf("% -v", err)
-	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
+	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig);
 }
 func ExampleE_Format_stringTracePreformat() {
 	err := loadConfig()
 	fmt.Printf("% +v", err)
-	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
-	// could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig);
-	// could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
+	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig);
+	// could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig);
+	// could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig);
+	// read: end of input - #3 n/a
 }
 
 func ExampleE_Format_json() {
@@ -76,7 +74,7 @@ func ExampleE_Format_jsonPreformat() {
 func ExampleE_Format_jsonDetail() {
 	err := loadConfig()
 	fmt.Printf("%#-v", err)
-	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)","error":"service configuration could not be loaded"}]
+	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig)","error":"service configuration could not be loaded"}]
 }
 
 func ExampleE_Format_jsonDetailPreformat() {
@@ -84,7 +82,7 @@ func ExampleE_Format_jsonDetailPreformat() {
 	fmt.Printf("% #-v", err)
 	// Output: [
 	//     {
-	//         "caller": "#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)",
+	//         "caller": "#0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig)",
 	//         "error": "service configuration could not be loaded"
 	//     }
 	// ]
@@ -93,7 +91,7 @@ func ExampleE_Format_jsonDetailPreformat() {
 func ExampleE_Format_jsonTrace() {
 	err := loadConfig()
 	fmt.Printf("%#+v", err)
-	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)","error":"service configuration could not be loaded"},{"caller":"#1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)","error":"could not decode configuration data"},{"caller":"#2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)","error":"could not read configuration file"}]
+	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig)","error":"service configuration could not be loaded"},{"caller":"#1 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig)","error":"could not decode configuration data"},{"caller":"#2 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig)","error":"could not read configuration file"},{"caller":"#3 n/a","error":"read: end of input"}]
 }
 
 func ExampleE_Format_jsonTracePreformat() {
@@ -101,16 +99,20 @@ func ExampleE_Format_jsonTracePreformat() {
 	fmt.Printf("% #+v", err)
 	// Output: [
 	//     {
-	//         "caller": "#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)",
+	//         "caller": "#0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig)",
 	//         "error": "service configuration could not be loaded"
 	//     },
 	//     {
-	//         "caller": "#1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)",
+	//         "caller": "#1 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig)",
 	//         "error": "could not decode configuration data"
 	//     },
 	//     {
-	//         "caller": "#2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)",
+	//         "caller": "#2 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig)",
 	//         "error": "could not read configuration file"
+	//     },
+	//     {
+	//         "caller": "#3 n/a",
+	//         "error": "read: end of input"
 	//     }
 	// ]
 }
@@ -120,7 +122,7 @@ func ExampleE_MarshalJSON_marshal() {
 	jsn, _ := json.Marshal(err)
 
 	fmt.Println(string(jsn))
-	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)","error":"service configuration could not be loaded"},{"caller":"#1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)","error":"could not decode configuration data"},{"caller":"#2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)","error":"could not read configuration file"}]
+	// Output: [{"caller":"#0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig)","error":"service configuration could not be loaded"},{"caller":"#1 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig)","error":"could not decode configuration data"},{"caller":"#2 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig)","error":"could not read configuration file"},{"caller":"#3 n/a","error":"read: end of input"}]
 }
 
 func ExampleE_MarshalJSON_marshalIndent() {
@@ -130,16 +132,20 @@ func ExampleE_MarshalJSON_marshalIndent() {
 	fmt.Println(string(jsn))
 	// Output: [
 	//     {
-	//         "caller": "#0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig)",
+	//         "caller": "#0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig)",
 	//         "error": "service configuration could not be loaded"
 	//     },
 	//     {
-	//         "caller": "#1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig)",
+	//         "caller": "#1 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig)",
 	//         "error": "could not decode configuration data"
 	//     },
 	//     {
-	//         "caller": "#2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig)",
+	//         "caller": "#2 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig)",
 	//         "error": "could not read configuration file"
+	//     },
+	//     {
+	//         "caller": "#3 n/a",
+	//         "error": "read: end of input"
 	//     }
 	// ]
 }
@@ -162,10 +168,10 @@ func ExampleUnwrap_iterateStack() {
 		err = errors.Unwrap(err)
 	}
 
-	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig); could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig); could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
-	// could not decode configuration data - #0 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig); could not read configuration file - #1 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
-	// could not read configuration file - #0 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
-	// read: end of input - #0 examples_test.go:162 (github.com/bdlm/errors_test.ExampleUnwrap_iterateStack);
+	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig); could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig); could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #3 n/a
+	// could not decode configuration data - #0 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig); could not read configuration file - #1 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #2 n/a
+	// could not read configuration file - #0 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #1 n/a
+	// read: end of input - #0 examples_test.go:168 (github.com/bdlm/errors/v2_test.ExampleUnwrap_iterateStack);
 }
 
 func ExampleWrap() {
@@ -174,10 +180,11 @@ func ExampleWrap() {
 	err = errors.Wrap(err, "loadConfig returned an error")
 
 	fmt.Printf("% +v", err)
-	// Output: loadConfig returned an error - #0 examples_test.go:174 (github.com/bdlm/errors_test.ExampleWrap);
-	// service configuration could not be loaded - #1 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
-	// could not decode configuration data - #2 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig);
-	// could not read configuration file - #3 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
+	// Output: loadConfig returned an error - #0 examples_test.go:180 (github.com/bdlm/errors/v2_test.ExampleWrap);
+	// service configuration could not be loaded - #1 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig);
+	// could not decode configuration data - #2 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig);
+	// could not read configuration file - #3 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig);
+	// read: end of input - #4 n/a
 }
 
 func ExampleWrapE() {
@@ -193,8 +200,9 @@ func ExampleWrapE() {
 	}
 
 	fmt.Printf("% +v", err)
-	// Output: rpc error: code = Internal desc = internal server error - #0 examples_test.go:192 (github.com/bdlm/errors_test.ExampleWrapE);
-	// service configuration could not be loaded - #1 mocks_test.go:16 (github.com/bdlm/errors_test.loadConfig);
-	// could not decode configuration data - #2 mocks_test.go:21 (github.com/bdlm/errors_test.decodeConfig);
-	// could not read configuration file - #3 mocks_test.go:26 (github.com/bdlm/errors_test.readConfig);
+	// Output: rpc error: code = Internal desc = internal server error - #0 examples_test.go:199 (github.com/bdlm/errors/v2_test.ExampleWrapE);
+	// service configuration could not be loaded - #1 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig);
+	// could not decode configuration data - #2 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig);
+	// could not read configuration file - #3 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig);
+	// read: end of input - #4 n/a
 }
