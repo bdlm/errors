@@ -36,7 +36,7 @@ All notable changes to this project are documented in the [`CHANGELOG`](CHANGELO
 
 ## Quick start
 
-See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples.
+See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples. All exported methods work with any error type as well as `nil` values.
 
 ```
 go get github.com/bdlm/errors
@@ -117,10 +117,10 @@ See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) f
 
 ## The `Error` interface
 
-The exported package methods return an interface that exposes additional metadata and troubleshooting information:
+The exported package methods return `github.com/bdlm/std/v2/errors` interfaces that expose metadata and troubleshooting information:
 
 ```go
-// Error defines the error interface.
+// Error defines a robust error stack interface.
 type Error interface {
 	// Caller returns the associated Caller instance.
 	Caller() Caller
@@ -140,7 +140,7 @@ type Error interface {
 	Unwrap() Error
 }
 
-// Caller holds runtime.Caller data.
+// Caller defines an interface to runtime caller results.
 type Caller interface {
 	// File returns the file in which the call occurred.
 	File() string
@@ -155,6 +155,9 @@ type Caller interface {
 	Pc() uintptr
 
 	// Trace returns the call stack.
-	Trace() []Caller
+	Trace() Trace
 }
+
+// Trace defines an error trace.
+type Trace []Caller
 ```
