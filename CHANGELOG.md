@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * `github.com/bdlm/std/v2/errors` interfaces
 
 #### Changed
+* licence changed from BSD to MIT
 * replace interfaces with `github.com/bdlm/std/v2/errors` implementations
 * simplified formatting and marshalling logic
 
