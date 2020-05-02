@@ -58,7 +58,7 @@ func TestCallerString(t *testing.T) {
 	assert := assert.New(t)
 
 	err := errors.New("test 1")
-	caller := errors.GetCaller(err)
+	caller := errors.Caller(err)
 
 	assert.Equal("github.com/bdlm/errors/v2_test.TestCallerString:60", caller.(fmt.Stringer).String(), "caller.String() did not return the correct output")
 }
@@ -169,16 +169,16 @@ func TestErrorf(t *testing.T) {
 	assert.Equal("test 1", err.Error(), "err is not 'test 1'")
 }
 
-func TestGetCaller(t *testing.T) {
+func TestCaller(t *testing.T) {
 	var err error
 	assert := assert.New(t)
 
 	err = errors.New("test 1")
-	caller := errors.GetCaller(err)
+	caller := errors.Caller(err)
 	assert.NotEqual(nil, caller, "caller is nil")
 
 	err = nil
-	caller = errors.GetCaller(err)
+	caller = errors.Caller(err)
 	assert.Equal(nil, caller, "caller is not nil")
 }
 
