@@ -36,7 +36,7 @@ All notable changes to this project are documented in the [`CHANGELOG`](CHANGELO
 
 ## Quick start
 
-See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples. All exported methods work with any error type as well as `nil` values.
+See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples. All exported methods work with any `error` type as well as `nil` values.
 
 ```
 go get github.com/bdlm/errors
