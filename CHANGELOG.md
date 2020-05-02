@@ -4,7 +4,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Major**: backwards incompatible package updates
 - **Minor**: feature additions
-- **Patch**: bug fixes, backward compatible protobuf model changes, etc.
+- **Patch**: bug fixes, backward compatible model and function changes, etc.
 
 # v2.0.0 - 2020-05-01
 `v2.0.0` is the production release of the `v0.2.0` development branch.
