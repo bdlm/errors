@@ -11,13 +11,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 #### Added
 * `go.mod`
-* `github.com/bdlm/std` error interface
+* `github.com/bdlm/std/v2/errors` interfaces
 
 #### Changed
 * replace interfaces with `github.com/bdlm/std/v2/errors` implementations
+* simplified formatting and marshalling logic
 
 #### Removed
-*
+* unused code
 
 # v0.2.1 - 2019-07-18
 #### Added
