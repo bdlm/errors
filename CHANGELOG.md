@@ -1,6 +1,21 @@
-All notable changes to this project are documented in this file.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+- **Major**: backwards incompatible package updates
+- **Minor**: feature additions
+- **Patch**: bug fixes, API route/ingress updates, DNS updates, backward compatible protobuf model chaanges
+
+# v2.0.0 - 2020-05-01
+#### Added
+* `go.mod`
+* `github.com/bdlm/std` error interface
+
+#### Changed
+*
+
+#### Removed
+*
 
 # v0.2.1 - 2019-07-18
 #### Added

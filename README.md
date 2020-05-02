@@ -7,6 +7,7 @@
 - **Patch**: bug fixes, API route/ingress updates, DNS updates
 
 **[CHANGELOG](CHANGELOG.md)**<br>
+
 <p align="center">
 	<a href="https://github.com/bdlm/errors/blob/master/LICENSE"><img src="https://img.shields.io/github/license/bdlm/errors.svg" alt="BSD-3-Clause"></a>
 	<a href="https://travis-ci.org/bdlm/errors"><img src="https://travis-ci.org/bdlm/errors.svg?branch=master" alt="Build status"></a>
