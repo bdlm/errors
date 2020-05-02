@@ -4,39 +4,23 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+
+	std_err "github.com/bdlm/std/v2/errors"
 )
 
-// Caller holds runtime.Caller data for an error.
-type Caller interface {
-	// File returns the file in which the call occurred.
-	File() string
-
-	// Func returns the name of the function in which the call occurred.
-	Func() string
-
-	// Line returns the line number in the file in which the call occurred.
-	Line() int
-
-	// Pc returns the program counter.
-	Pc() uintptr
-
-	// Trace returns the call stack.
-	Trace() []Caller
-}
-
-// caller holds runtime.Caller data.
+// caller is a github.com/bdlm/std.Caller interface implementation and holds
+// runtime.Caller data.
 type caller struct {
 	file  string
 	line  int
 	ok    bool
 	pc    uintptr
-	trace []Caller
+	trace std_err.Trace
 }
 
-// NewCaller returns a new caller instance containing data for the current
-// call stack.
-func NewCaller() Caller {
-	trace := []Caller{}
+// NewCaller returns a new Caller containing data for the current call stack.
+func NewCaller() std_err.Caller {
+	trace := std_err.Trace{}
 	clr := caller{}
 	a := 0
 	for {
@@ -91,6 +75,6 @@ func (caller caller) String() string {
 }
 
 // Trace implements Caller.
-func (caller caller) Trace() []Caller {
+func (caller caller) Trace() std_err.Trace {
 	return caller.trace
 }
