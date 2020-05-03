@@ -171,7 +171,7 @@ func ExampleUnwrap_iterateStack() {
 	// Output: service configuration could not be loaded - #0 mocks_test.go:16 (github.com/bdlm/errors/v2_test.loadConfig); could not decode configuration data - #1 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig); could not read configuration file - #2 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #3 n/a
 	// could not decode configuration data - #0 mocks_test.go:21 (github.com/bdlm/errors/v2_test.decodeConfig); could not read configuration file - #1 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #2 n/a
 	// could not read configuration file - #0 mocks_test.go:26 (github.com/bdlm/errors/v2_test.readConfig); read: end of input - #1 n/a
-	// read: end of input - #0 examples_test.go:168 (github.com/bdlm/errors/v2_test.ExampleUnwrap_iterateStack);
+	// read: end of input - #0 n/a
 }
 
 func ExampleWrap() {
