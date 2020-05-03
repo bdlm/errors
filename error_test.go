@@ -35,7 +35,7 @@ func TestTrace(t *testing.T) {
 	assert.Equal("github.com/bdlm/errors/v2_test.TestTrace", err.Caller().Func(), "caller did not reflect the correct function name")
 
 	err = errors.Trace(nil)
-	assert.Equal(nil, err, "err is not nil")
+	assert.True(nil == err, "err is not nil")
 }
 
 func TestTrack(t *testing.T) {
@@ -51,7 +51,7 @@ func TestTrack(t *testing.T) {
 	assert.Equal("github.com/bdlm/errors/v2_test.TestTrack", errors.Unwrap(err).Caller().Func(), "caller did not reflect the correct function name")
 
 	err = errors.Track(nil)
-	assert.Equal(nil, err, "err is not nil")
+	assert.True(nil == err, "err is not nil")
 }
 
 func TestCallerString(t *testing.T) {
@@ -208,6 +208,6 @@ func TestEUnwrap(t *testing.T) {
 	err = errors.Wrap(err, "test 2")
 	assert.False(err.Is(testErr), "err is testErr")
 
-	err = err.Unwrap()
+	err = err.Unwrap().(*errors.E)
 	assert.True(err.Is(testErr), "err is not testErr")
 }

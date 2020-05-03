@@ -8,14 +8,14 @@ import (
 )
 
 // MarshalJSON implements the json.Marshaller interface.
-func (e E) MarshalJSON() ([]byte, error) {
+func (e *E) MarshalJSON() ([]byte, error) {
 	var lastE, nextE error
 	var key int
 	jsonData := []map[string]interface{}{}
 
 	for key, nextE = range list(e) {
 		data := map[string]interface{}{}
-		err, ok := nextE.(E)
+		err, ok := nextE.(*E)
 		if ok {
 			data["caller"] = fmt.Sprintf("#%d %s:%d (%s)",
 				key,
@@ -37,7 +37,7 @@ func (e E) MarshalJSON() ([]byte, error) {
 
 	if nil != lastE {
 		data := map[string]interface{}{}
-		err, ok := lastE.(E)
+		err, ok := lastE.(*E)
 		if ok {
 			data["caller"] = fmt.Sprintf("#%d %s:%d (%s)",
 				key+1,

@@ -29,7 +29,7 @@ import (
 //      %#v:   {"error":"An error occurred"}
 //      %#-v:  {"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}
 //      %#+v:  [{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}]
-func (e E) Format(state fmt.State, verb rune) {
+func (e *E) Format(state fmt.State, verb rune) {
 	str := bytes.NewBuffer([]byte{})
 
 	switch verb {
@@ -76,7 +76,7 @@ func (e E) Format(state fmt.State, verb rune) {
 				break
 			}
 
-			if err, ok := nextE.(E); ok {
+			if err, ok := nextE.(*E); ok {
 				lastE = err.prev
 			}
 		}
@@ -99,7 +99,7 @@ func (e E) Format(state fmt.State, verb rune) {
 }
 
 func format(key int, nextE error, sp string, jsonData []map[string]interface{}, str *bytes.Buffer, flagDetail bool, flagFormat bool, flagTrace bool, modeJSON bool) (string, []map[string]interface{}, *bytes.Buffer) {
-	err, ok := nextE.(E)
+	err, ok := nextE.(*E)
 
 	if modeJSON {
 		data := map[string]interface{}{}

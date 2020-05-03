@@ -21,10 +21,10 @@ type caller struct {
 // NewCaller returns a new Caller containing data for the current call stack.
 func NewCaller() std_err.Caller {
 	trace := std_err.Trace{}
-	clr := caller{}
+	clr := &caller{}
 	a := 0
 	for {
-		traceCaller := caller{}
+		traceCaller := &caller{}
 		if traceCaller.pc, traceCaller.file, traceCaller.line, traceCaller.ok = runtime.Caller(a); traceCaller.ok {
 			if !strings.Contains(strings.ToLower(traceCaller.file), "github.com/bdlm/errors") ||
 				strings.HasSuffix(strings.ToLower(traceCaller.file), "_test.go") {
@@ -46,27 +46,27 @@ func NewCaller() std_err.Caller {
 }
 
 // File implements Caller.
-func (caller caller) File() string {
+func (caller *caller) File() string {
 	return caller.file
 }
 
 // Func implements Caller.
-func (caller caller) Func() string {
+func (caller *caller) Func() string {
 	return runtime.FuncForPC(caller.pc).Name()
 }
 
 // Line implements Caller.
-func (caller caller) Line() int {
+func (caller *caller) Line() int {
 	return caller.line
 }
 
 // Pc implements Caller.
-func (caller caller) Pc() uintptr {
+func (caller *caller) Pc() uintptr {
 	return caller.pc
 }
 
 // String implements fmt.Stringer.
-func (caller caller) String() string {
+func (caller *caller) String() string {
 	return fmt.Sprintf(
 		"%s:%d",
 		runtime.FuncForPC(caller.pc).Name(),
@@ -75,6 +75,6 @@ func (caller caller) String() string {
 }
 
 // Trace implements Caller.
-func (caller caller) Trace() std_err.Trace {
+func (caller *caller) Trace() std_err.Trace {
 	return caller.trace
 }
