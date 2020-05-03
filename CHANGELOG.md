@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
 # v2.0.0 - 2020-05-01
+#### Changed
+* Refactoring to better implement the `std/errors.Error` interface
+
+# v2.0.0 - 2020-05-01
 `v2.0.0` is the production release of the `v0.2.0` development branch.
 
 #### Added
