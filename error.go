@@ -64,8 +64,7 @@ func (e *E) Unwrap() std_err.Error {
 		return prev
 	}
 	return &E{
-		caller: NewCaller(),
-		err:    e.prev,
+		err: e.prev,
 	}
 }
 

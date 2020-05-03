@@ -16,7 +16,7 @@ func (e *E) MarshalJSON() ([]byte, error) {
 	for key, nextE = range list(e) {
 		data := map[string]interface{}{}
 		err, ok := nextE.(*E)
-		if ok {
+		if ok && nil != err.Caller() {
 			data["caller"] = fmt.Sprintf("#%d %s:%d (%s)",
 				key,
 				path.Base(err.Caller().File()),
@@ -38,7 +38,7 @@ func (e *E) MarshalJSON() ([]byte, error) {
 	if nil != lastE {
 		data := map[string]interface{}{}
 		err, ok := lastE.(*E)
-		if ok {
+		if ok && nil != err.Caller() {
 			data["caller"] = fmt.Sprintf("#%d %s:%d (%s)",
 				key+1,
 				path.Base(err.Caller().File()),

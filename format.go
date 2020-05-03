@@ -104,7 +104,7 @@ func format(key int, nextE error, sp string, jsonData []map[string]interface{}, 
 	if modeJSON {
 		data := map[string]interface{}{}
 		if flagDetail || flagTrace {
-			if ok {
+			if ok && nil != err.Caller() {
 				data["caller"] = fmt.Sprintf("#%d %s:%d (%s)",
 					key,
 					path.Base(err.Caller().File()),
@@ -131,7 +131,7 @@ func format(key int, nextE error, sp string, jsonData []map[string]interface{}, 
 			if "" != nextE.Error() {
 				fmt.Fprintf(str, " - ")
 			}
-			if ok {
+			if ok && nil != err.Caller() {
 				fmt.Fprintf(str, "#%d %s:%d (%s);",
 					key,
 					path.Base(err.Caller().File()),
