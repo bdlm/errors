@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	std_err "github.com/bdlm/std/v2/errors"
+	std_caller "github.com/bdlm/std/v2/caller"
 )
 
 // caller is a github.com/bdlm/std.Caller interface implementation and holds
@@ -15,12 +15,12 @@ type caller struct {
 	line  int
 	ok    bool
 	pc    uintptr
-	trace std_err.Trace
+	trace std_caller.Trace
 }
 
 // NewCaller returns a new Caller containing data for the current call stack.
-func NewCaller() std_err.Caller {
-	trace := std_err.Trace{}
+func NewCaller() std_caller.Caller {
+	trace := std_caller.Trace{}
 	clr := &caller{}
 	a := 0
 	for {
@@ -75,6 +75,6 @@ func (caller *caller) String() string {
 }
 
 // Trace implements Caller.
-func (caller *caller) Trace() std_err.Trace {
+func (caller *caller) Trace() std_caller.Trace {
 	return caller.trace
 }

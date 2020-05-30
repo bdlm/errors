@@ -1,19 +1,20 @@
 package errors
 
 import (
-	std_err "github.com/bdlm/std/v2/errors"
+	std_caller "github.com/bdlm/std/v2/caller"
+	std_error "github.com/bdlm/std/v2/errors"
 )
 
 // E is a github.com/bdlm/std.Error interface implementation and simply wraps
 // the exported package methods as a convenience.
 type E struct {
-	caller std_err.Caller
+	caller std_caller.Caller
 	err    error
 	prev   error
 }
 
 // Caller implements std.Error.
-func (e *E) Caller() std_err.Caller {
+func (e *E) Caller() std_caller.Caller {
 	if nil == e {
 		return nil
 	}
@@ -31,7 +32,9 @@ func (e *E) Has(test error) bool {
 		return true
 	}
 	if prev := e.Unwrap(); nil != prev {
-		return prev.Has(test)
+		if pe, ok := prev.(interface{ Has(error) bool }); ok {
+			return pe.Has(test)
+		}
 	}
 	return false
 }
@@ -44,8 +47,8 @@ func (e *E) Is(test error) bool {
 	if e.err == test && e.Error() == test.Error() {
 		return true
 	}
-	if std, ok := test.(std_err.Error); ok {
-		return func(e1, e2 std_err.Error) bool {
+	if std, ok := test.(std_error.Error); ok {
+		return func(e1, e2 std_error.Error) bool {
 			return e1 == e2 && e1.Error() == e2.Error()
 		}(e, std)
 	}
@@ -60,7 +63,7 @@ func (e *E) Unwrap() error {
 	if nil == e.prev {
 		return nil
 	}
-	if prev, ok := e.prev.(std_err.Error); ok {
+	if prev, ok := e.prev.(std_error.Error); ok {
 		return prev
 	}
 	return &E{
@@ -73,7 +76,7 @@ func list(e error) []error {
 	ret := []error{}
 
 	if nil != e {
-		if std, ok := e.(std_err.Error); ok {
+		if std, ok := e.(std_error.Unwrapper); ok {
 			ret = append(ret, e)
 			ret = append(ret, list(std.Unwrap())...)
 		}
