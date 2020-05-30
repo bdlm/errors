@@ -42,7 +42,7 @@ func As(err, test error) error {
 
 // Caller returns the Caller associated with an error, if any.
 func Caller(err error) std_caller.Caller {
-	if e, ok := err.(interface{ Caller() std_caller.Caller }); ok {
+	if e, ok := err.(std_error.Caller); ok {
 		return e.Caller()
 	}
 	return nil
@@ -52,19 +52,6 @@ func Caller(err error) std_caller.Caller {
 // contains caller data.
 func Errorf(msg string, data ...interface{}) *E {
 	return New(fmt.Sprintf(msg, data...))
-}
-
-// Has returns whether an error or an error stack stack is or contains the
-// referenced error type.
-func Has(err, test error) bool {
-	if nil == err || nil == test {
-		return false
-	}
-	if e, ok := err.(interface{ Has(error) bool }); ok {
-		return e.Has(test)
-
-	}
-	return Is(err, test)
 }
 
 // Is reports whether any error in err's chain matches test.
@@ -127,7 +114,7 @@ func Trace(e error) *E {
 
 	clr := NewCaller().(*caller)
 	clr.trace = std_caller.Trace{clr.trace[0]}
-	if stdClr, ok := e.(std_error.ErrorCaller); ok {
+	if stdClr, ok := e.(std_error.Caller); ok {
 		clr.trace = append(clr.trace, stdClr.Caller().Trace()...)
 	}
 
@@ -149,7 +136,7 @@ func Track(e error) *E {
 		stdE = &E{
 			err: e,
 		}
-		if clr, ok := e.(std_error.ErrorCaller); ok {
+		if clr, ok := e.(std_error.Caller); ok {
 			stdE.caller = clr.Caller()
 		} else {
 			stdE.caller = NewCaller()

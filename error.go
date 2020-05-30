@@ -1,6 +1,8 @@
 package errors
 
 import (
+	"reflect"
+
 	std_caller "github.com/bdlm/std/v2/caller"
 	std_error "github.com/bdlm/std/v2/errors"
 )
@@ -26,32 +28,35 @@ func (e *E) Error() string {
 	return e.err.Error()
 }
 
-// Has implements std.Error.
-func (e *E) Has(test error) bool {
-	if e.Is(test) {
-		return true
-	}
-	if prev := e.Unwrap(); nil != prev {
-		if pe, ok := prev.(interface{ Has(error) bool }); ok {
-			return pe.Has(test)
-		}
-	}
-	return false
-}
-
 // Is implements std.Error.
 func (e *E) Is(test error) bool {
 	if nil == test {
 		return false
 	}
-	if e.err == test && e.Error() == test.Error() {
+
+	isComparable := reflect.TypeOf(e).Comparable() && reflect.TypeOf(test).Comparable()
+	if isComparable && e == test {
 		return true
 	}
-	if std, ok := test.(std_error.Error); ok {
-		return func(e1, e2 std_error.Error) bool {
-			return e1 == e2 && e1.Error() == e2.Error()
-		}(e, std)
+
+	if err, ok := test.(*E); ok {
+		isComparable = reflect.TypeOf(err.err).Comparable() && reflect.TypeOf(test).Comparable()
+		if isComparable && err.err == test {
+			return true
+		}
 	}
+
+	isComparable = reflect.TypeOf(e.err).Comparable() && reflect.TypeOf(test).Comparable()
+	if isComparable && e.err == test {
+		return true
+	}
+
+	if err := e.Unwrap(); nil != err {
+		if err, ok := err.(interface{ Is(error) bool }); ok {
+			return err.Is(test)
+		}
+	}
+
 	return false
 }
 
