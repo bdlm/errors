@@ -75,23 +75,12 @@ if prevErr := errors.Unwrap(err); nil != prevErr {
 }
 ```
 
-#### Test for a specific error type
-```go
-var MyError = errors.New("My error")
-func main() {
-	err := doWork()
-	if errors.Is(err, MyError) {
-		...
-	}
-}
-```
-
 #### Test to see if a specific error type exists anywhere in an error stack
 ```go
 var MyError = errors.New("My error")
 func main() {
 	err := doWork()
-	if errors.Has(err, MyError) {
+	if errors.Is(err, MyError) {
 		...
 	}
 }
