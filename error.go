@@ -53,7 +53,7 @@ func (e *E) Is(test error) bool {
 }
 
 // Unwrap implements std.Error.
-func (e *E) Unwrap() std_err.Error {
+func (e *E) Unwrap() error {
 	if nil == e {
 		return nil
 	}

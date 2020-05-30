@@ -2,13 +2,54 @@ package errors
 
 import (
 	"fmt"
+	"reflect"
 
 	std_err "github.com/bdlm/std/v2/errors"
 )
 
-// Caller returns the Caller associated with an Error, if any.
+var errorType = reflect.TypeOf((*error)(nil)).Elem()
+
+// As searches the error stack for an error that can be cast to the test
+// argument, which must be a pointer. If it succeeds it performs the
+// assignment and returns the result, otherwise it returns nil.
+func As(err, test error) error {
+	if target == nil {
+		return nil
+	}
+
+	val := reflect.ValueOf(target)
+	typ := val.Type()
+	if typ.Kind() != reflect.Ptr || val.IsNil() {
+		return nil
+	}
+	if e := typ.Elem(); e.Kind() != reflect.Interface && !e.Implements(errorType) {
+		return nil
+	}
+	targetType := typ.Elem()
+	for err != nil {
+		if reflect.TypeOf(err).AssignableTo(targetType) {
+			val.Elem().Set(reflect.ValueOf(err))
+			return err
+		}
+		if e, ok := err.(interface{ As(interface{}) error }); ok {
+			return e.As(target)
+		}
+		err = Unwrap(err)
+	}
+	return nil
+
+	if nil == err || nil == test {
+		return nil
+	}
+	if std, ok := err.(std_err.Error); ok {
+		return std.Has(test)
+	}
+	return Is(err, test)
+}
+
+// Caller returns the Caller associated with an error, if any.
 func Caller(err error) std_err.Caller {
-	if e, ok := err.(std_err.Error); ok {
+	if e, ok := err.(interface{ Caller() std_err.Caller }); ok {
 		return e.Caller()
 	}
 	return nil
@@ -26,21 +67,54 @@ func Has(err, test error) bool {
 	if nil == err || nil == test {
 		return false
 	}
-	if std, ok := err.(std_err.Error); ok {
-		return std.Has(test)
+	if e, ok := err.(interface{ Has(error) bool }); ok {
+		return e.Has(test)
+
 	}
 	return Is(err, test)
 }
 
-// Is returns whether an error is the referenced error type.
+// Is reports whether any error in err's chain matches target.
+//
+// The chain consists of err itself followed by the sequence of errors obtained by
+// repeatedly calling Unwrap.
+//
+// An error is considered to match a target if it is equal to that target or if
+// it implements a method Is(error) bool such that Is(target) returns true.
+//
+// An error type might provide an Is method so it can be treated as equivalent
+// to an existing error. For example, if MyError defines
+//
+//	func (m MyError) Is(target error) bool { return target == os.ErrExist }
+//
+// then Is(MyError{}, os.ErrExist) returns true. See syscall.Errno.Is for
+// an example in the standard library.
 func Is(err, test error) bool {
-	if nil == err || nil == test {
+	if test == nil {
+		return err == test
+	}
+
+	isComparable := reflect.TypeOf(err).Comparable() && reflect.TypeOf(test).Comparable()
+	if isComparable && err == target {
+		return true
+	}
+
+	if e, ok := err.(*E); ok {
+		isComparable := reflect.TypeOf(e.err).Comparable() && reflect.TypeOf(test).Comparable()
+		if isComparable && e.err == target {
+			return true
+		}
+	}
+
+	if e, ok := err.(interface{ Is(error) bool }); ok {
+		return e.Is(test)
+	}
+
+	if err = Unwrap(err); err == nil {
 		return false
 	}
-	if std, ok := err.(std_err.Error); ok {
-		return std.Is(test)
-	}
-	return err == test && err.Error() == test.Error()
+
+	return Is(err, test)
 }
 
 // New returns an error that contains caller data.
@@ -97,9 +171,9 @@ func Track(e error) *E {
 }
 
 // Unwrap returns the previous error.
-func Unwrap(e error) std_err.Error {
-	if std, ok := e.(std_err.Error); ok {
-		return std.Unwrap()
+func Unwrap(err error) error {
+	if e, ok := err.(interface{ Unwrap() error }); ok {
+		return e.Unwrap()
 	}
 	return nil
 }
