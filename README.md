@@ -161,4 +161,3 @@ An error occurred
 #
 
 See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples.
-
