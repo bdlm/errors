@@ -117,7 +117,7 @@ for nil != err {
 * `#` - JSON formatted output, useful for logging
 * `-` - Output caller details, useful for troubleshooting
 * `+` - Output full error stack details, useful for debugging
-* `' '` - (space) Add whitespace formatting for readability, useful for development
+* ` ` - (space) Add whitespace formatting for readability, useful for development
 
 ##### Examples
 `fmt.Printf("%s", err)`
@@ -137,16 +137,36 @@ An error occurred
 #0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred #1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors) - An error occurred
 ```
 `fmt.Printf("%#v", err)`
-```
+```json
 {"error":"An error occurred"}
 ```
 `fmt.Printf("%#-v", err)`
-```
+```json
 {"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}
 ```
 `fmt.Printf("%#+v", err)`
-```
+```json
 [{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}]
+```
+`fmt.Printf("% #-v", err)`
+```json
+{
+    "caller": "#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)",
+    "error": "An error occurred"
+}
+```
+`fmt.Printf("% #+v", err)`
+```json
+[
+    {
+        "caller": "#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)",
+        "error": "An error occurred"
+    },
+    {
+        "caller": "#0 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)",
+        "error": "An error occurred"
+    }
+]
 ```
 
 #
