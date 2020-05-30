@@ -1,12 +1,16 @@
 /*
-Package errors provides simple, concise, useful error handling and annotation.
+Package errors provides simple, concise, useful error handling and annotation. This package
+aims to implement the Error Inspection and Error Values Go2 draft designs.
+
+https://go.googlesource.com/proposal/+/master/design/go2draft-error-inspection.md
+https://go.googlesource.com/proposal/+/master/design/go2draft.md
 
 	import (
-		errs "github.com/mkenney/go-errors"
+		"github.com/bdlm/errors/v2"
 	)
 
 One of the biggest frustrations with Go error handling is the lack of forensic and meta
-information errors can provide. Out of the box errors are just a string and possibly a type.
+information errors should provide. By default errors are just a string and possibly a type.
 They can't tell you where they occurred or the path through the call stack they followed.
 The error implementation in Go is robust enough to control program flow but it's not very
 efficient for troubleshooting or analysis.
@@ -17,11 +21,19 @@ Since the idom in Go is that we pass the error back up the stack anyway:
 		return err
 	}
 
-it's trivial to make errors much more informative with a simple error package. This package
-makes this easy and supports tracing the call stack and the error callers with relative
-ease. Custom error types are also fully compatible with this package and can be used freely.
+it's trivial to make errors much more informative with a simple error package. `bdlm/errors`
+makes this easy and supports tracing the call stack and the error callers with relative ease.
+Custom error types are also fully compatible with this package and can be used freely.
 
-Quick start
+Install
+
+	go get github.com/bdlm/errors/v2
+
+Quick Start
+
+All package methods work with any `error` type as well as `nil` values, and error instances
+implement the Unwrap, Is, Marshaler, and Formatter interfaces as well as the github.com/bdlm/std/errors
+interfaces.
 
 Create an error:
 
