@@ -14,7 +14,7 @@ var errorType = reflect.TypeOf((*error)(nil)).Elem()
 // argument, which must be a pointer. If it succeeds it performs the
 // assignment and returns the result, otherwise it returns nil.
 func As(err, test error) error {
-	if test == nil {
+	if nil == err || nil == test {
 		return nil
 	}
 
@@ -23,9 +23,11 @@ func As(err, test error) error {
 	if typ.Kind() != reflect.Ptr || val.IsNil() {
 		return nil
 	}
+
 	if e := typ.Elem(); e.Kind() != reflect.Interface && !e.Implements(errorType) {
 		return nil
 	}
+
 	testType := typ.Elem()
 	for err != nil {
 		if reflect.TypeOf(err).AssignableTo(testType) {
@@ -37,6 +39,7 @@ func As(err, test error) error {
 		}
 		err = Unwrap(err)
 	}
+
 	return nil
 }
 

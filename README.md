@@ -3,7 +3,7 @@
 <a href="https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#mature"><img src="https://img.shields.io/badge/stability-mature-008000.svg" alt="Mature"></a> This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). This package is considered mature, you should expect package stability in <strong>Minor</strong> and <strong>Patch</strong> version releases
 
 - **Major**: backwards incompatible package updates
-- **Minor**: feature additions
+- **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
 **[CHANGELOG](CHANGELOG.md)**<br>
@@ -172,51 +172,3 @@ An error occurred
 #
 
 See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples.
-
-
-## The `Error` interface
-
-The exported package methods return `github.com/bdlm/std/v2/errors` interfaces that expose metadata and troubleshooting information:
-
-```go
-// Error defines a robust error stack interface.
-type Error interface {
-	// Caller returns the associated Caller instance.
-	Caller() Caller
-
-	// Error implements error.
-	Error() string
-
-	// Has tests to see if the test error exists anywhere in the error
-	// stack.
-	Has(test error) bool
-
-	// Is tests to see if the test error matches most recent error in the
-	// stack.
-	Is(test error) bool
-
-	// Unwrap returns the next error, if any.
-	Unwrap() Error
-}
-
-// Caller defines an interface to runtime caller results.
-type Caller interface {
-	// File returns the file in which the call occurred.
-	File() string
-
-	// Func returns the name of the function in which the call occurred.
-	Func() string
-
-	// Line returns the line number in the file in which the call occurred.
-	Line() int
-
-	// Pc returns the program counter.
-	Pc() uintptr
-
-	// Trace returns the call stack.
-	Trace() Trace
-}
-
-// Trace defines an error trace.
-type Trace []Caller
-```

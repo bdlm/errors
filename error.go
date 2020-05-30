@@ -15,7 +15,7 @@ type E struct {
 	prev   error
 }
 
-// Caller implements std.Error.
+// Caller implements std_error.Caller.
 func (e *E) Caller() std_caller.Caller {
 	if nil == e {
 		return nil
@@ -23,12 +23,12 @@ func (e *E) Caller() std_caller.Caller {
 	return e.caller
 }
 
-// Error implements std.Error.
+// Error implements std_error.Error.
 func (e *E) Error() string {
 	return e.err.Error()
 }
 
-// Is implements std.Error.
+// Is implements std_error.Error.
 func (e *E) Is(test error) bool {
 	if nil == test {
 		return false
@@ -38,17 +38,20 @@ func (e *E) Is(test error) bool {
 	if isComparable && e == test {
 		return true
 	}
-
-	if err, ok := test.(*E); ok {
-		isComparable = reflect.TypeOf(err.err).Comparable() && reflect.TypeOf(test).Comparable()
-		if isComparable && err.err == test {
-			return true
-		}
-	}
-
 	isComparable = reflect.TypeOf(e.err).Comparable() && reflect.TypeOf(test).Comparable()
 	if isComparable && e.err == test {
 		return true
+	}
+
+	if testE, ok := test.(*E); ok {
+		isComparable = reflect.TypeOf(e).Comparable() && reflect.TypeOf(testE).Comparable()
+		if isComparable && e == testE {
+			return true
+		}
+		isComparable = reflect.TypeOf(e.err).Comparable() && reflect.TypeOf(testE.err).Comparable()
+		if isComparable && e.err == testE.err {
+			return true
+		}
 	}
 
 	if err := e.Unwrap(); nil != err {
@@ -60,7 +63,7 @@ func (e *E) Is(test error) bool {
 	return false
 }
 
-// Unwrap implements std.Error.
+// Unwrap implements std_error.Wrapper.
 func (e *E) Unwrap() error {
 	if nil == e {
 		return nil
@@ -81,7 +84,7 @@ func list(e error) []error {
 	ret := []error{}
 
 	if nil != e {
-		if std, ok := e.(std_error.Unwrapper); ok {
+		if std, ok := e.(std_error.Wrapper); ok {
 			ret = append(ret, e)
 			ret = append(ret, list(std.Unwrap())...)
 		}
