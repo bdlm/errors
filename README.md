@@ -36,7 +36,7 @@ go get github.com/bdlm/errors/v2
 
 ## Quick start
 
-See the [documentation](https://pkg.go.dev/github.com/bdlm/errors#pkg-examples) for more examples. All package methods work with any `error` type as well as `nil` values, and error instances implement the [`Unwrap`](https://go.googlesource.com/proposal/+/master/design/go2draft-error-inspection.md), [`Is`](https://go.googlesource.com/proposal/+/master/design/go2draft-error-inspection.md), [`Marshaler`](https://golang.org/pkg/encoding/json/#Marshaler), [`Unmarshaler`](https://golang.org/pkg/encoding/json/#Unmarshaler), and [`Formatter`](https://golang.org/pkg/fmt/#Formatter) interfaces as well as the [`github.com/bdlm/std/errors`](https://github.com/bdlm/std/tree/master/errors) interfaces.
+See the [documentation](https://pkg.go.dev/github.com/bdlm/errors#pkg-examples) for more examples. All package methods work with any `error` type as well as `nil` values, and error instances implement the [`Unwrap`](https://go.googlesource.com/proposal/+/master/design/go2draft-error-inspection.md), [`Is`](https://go.googlesource.com/proposal/+/master/design/go2draft-error-inspection.md), [`Marshaler`](https://golang.org/pkg/encoding/json/#Marshaler), and [`Formatter`](https://golang.org/pkg/fmt/#Formatter) interfaces as well as the [`github.com/bdlm/std/errors`](https://github.com/bdlm/std/tree/master/errors) interfaces.
 
 #### Create an error
 ```go
