@@ -36,7 +36,7 @@ go get github.com/bdlm/errors/v2
 
 ## Quick start
 
-See the [documentation](https://pkg.go.dev/github.com/bdlm/errors#pkg-examples) for more examples. All exported methods work with any `error` type as well as `nil` values.
+See the [documentation](https://pkg.go.dev/github.com/bdlm/errors#pkg-examples) for more examples. All exported methods work with any `error` type as well as `nil` values, and error instances implement the `Unwrap` and `Is` interfaces as well as the `github.com/bdlm/std/errors` interface. In addition, various output formats targeting logging and troubleshooting use cases are built in.
 
 #### Create an error
 ```go
@@ -104,6 +104,49 @@ for nil != err {
 	fmt.Println(err)
 	err = errors.Unwrap(err)
 }
+```
+
+#### Formatting verbs
+`errors` implements the `%s` and `%v` [`fmt.Formatter`](https://golang.org/pkg/fmt/#hdr-Printing) formatting verbs and several modifier flags:
+
+##### Verbs
+* `%s` - Returns the error string of the last error added.
+* `%v` - Alias for `%s`
+
+##### Flags
+* `#` - JSON formatted output, useful for logging
+* `-` - Output caller details, useful for troubleshooting
+* `+` - Output full error stack details, useful for debugging
+* `' '` - (space) Add whitespace formatting for readability, useful for development
+
+##### Examples
+`fmt.Printf("%s", err)`
+```
+An error occurred
+```
+`fmt.Printf("%v", err)`
+```
+An error occurred
+```
+`fmt.Printf("%-v", err)`
+```
+#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred
+```
+`fmt.Printf("%+v", err)`
+```
+#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred #1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors) - An error occurred
+```
+`fmt.Printf("%#v", err)`
+```
+{"error":"An error occurred"}
+```
+`fmt.Printf("%#-v", err)`
+```
+{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}
+```
+`fmt.Printf("%#+v", err)`
+```
+[{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}]
 ```
 
 #
