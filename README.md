@@ -135,7 +135,7 @@ An error occurred
 ```
 `fmt.Printf("%#+v", err)`
 ```json
-[{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}]
+[{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"},{"caller":"#1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}]
 ```
 `fmt.Printf("% #-v", err)`
 ```json
@@ -152,7 +152,7 @@ An error occurred
         "error": "An error occurred"
     },
     {
-        "caller": "#0 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)",
+        "caller": "#1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)",
         "error": "An error occurred"
     }
 ]
