@@ -3,7 +3,7 @@
 <a href="https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#mature"><img src="https://img.shields.io/badge/stability-mature-008000.svg" alt="Mature"></a> This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). This package is considered mature, you should expect package stability in <strong>Minor</strong> and <strong>Patch</strong> version releases
 
 - **Major**: backwards incompatible package updates
-- **Minor**: feature additions
+- **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
 **[CHANGELOG](CHANGELOG.md)**<br>
@@ -36,7 +36,7 @@ go get github.com/bdlm/errors/v2
 
 ## Quick start
 
-See the [documentation](https://pkg.go.dev/github.com/bdlm/errors#pkg-examples) for more examples. All exported methods work with any `error` type as well as `nil` values.
+See the [documentation](https://pkg.go.dev/github.com/bdlm/errors#pkg-examples) for more examples. All package methods work with any `error` type as well as `nil` values, and error instances implement the [`Unwrap`](https://go.googlesource.com/proposal/+/master/design/go2draft-error-inspection.md), [`Is`](https://go.googlesource.com/proposal/+/master/design/go2draft-error-inspection.md), [`Marshaler`](https://golang.org/pkg/encoding/json/#Marshaler), [`Unmarshaler`](https://golang.org/pkg/encoding/json/#Unmarshaler), and [`Formatter`](https://golang.org/pkg/fmt/#Formatter) interfaces as well as the [`github.com/bdlm/std/errors`](https://github.com/bdlm/std/tree/master/errors) interfaces.
 
 #### Create an error
 ```go
@@ -75,23 +75,12 @@ if prevErr := errors.Unwrap(err); nil != prevErr {
 }
 ```
 
-#### Test for a specific error type
-```go
-var MyError = errors.New("My error")
-func main() {
-	err := doWork()
-	if errors.Is(err, MyError) {
-		...
-	}
-}
-```
-
 #### Test to see if a specific error type exists anywhere in an error stack
 ```go
 var MyError = errors.New("My error")
 func main() {
 	err := doWork()
-	if errors.Has(err, MyError) {
+	if errors.Is(err, MyError) {
 		...
 	}
 }
@@ -106,54 +95,69 @@ for nil != err {
 }
 ```
 
+#### Formatting verbs
+`errors` implements the `%s` and `%v` [`fmt.Formatter`](https://golang.org/pkg/fmt/#hdr-Printing) formatting verbs and several modifier flags:
+
+##### Verbs
+* `%s` - Returns the error string of the last error added.
+* `%v` - Alias for `%s`
+
+##### Flags
+* `#` - JSON formatted output, useful for logging
+* `-` - Output caller details, useful for troubleshooting
+* `+` - Output full error stack details, useful for debugging
+* ` ` - (space) Add whitespace formatting for readability, useful for development
+
+##### Examples
+`fmt.Printf("%s", err)`
+```
+An error occurred
+```
+`fmt.Printf("%v", err)`
+```
+An error occurred
+```
+`fmt.Printf("%-v", err)`
+```
+#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred
+```
+`fmt.Printf("%+v", err)`
+```
+#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred #1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors) - An error occurred
+```
+`fmt.Printf("%#v", err)`
+```json
+{"error":"An error occurred"}
+```
+`fmt.Printf("%#-v", err)`
+```json
+{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}
+```
+`fmt.Printf("%#+v", err)`
+```json
+[{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"},{"caller":"#1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}]
+```
+`fmt.Printf("% #-v", err)`
+```json
+{
+    "caller": "#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)",
+    "error": "An error occurred"
+}
+```
+`fmt.Printf("% #+v", err)`
+```json
+[
+    {
+        "caller": "#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)",
+        "error": "An error occurred"
+    },
+    {
+        "caller": "#1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)",
+        "error": "An error occurred"
+    }
+]
+```
+
 #
 
 See the [documentation](https://godoc.org/github.com/bdlm/errors#pkg-examples) for more examples.
-
-
-## The `Error` interface
-
-The exported package methods return `github.com/bdlm/std/v2/errors` interfaces that expose metadata and troubleshooting information:
-
-```go
-// Error defines a robust error stack interface.
-type Error interface {
-	// Caller returns the associated Caller instance.
-	Caller() Caller
-
-	// Error implements error.
-	Error() string
-
-	// Has tests to see if the test error exists anywhere in the error
-	// stack.
-	Has(test error) bool
-
-	// Is tests to see if the test error matches most recent error in the
-	// stack.
-	Is(test error) bool
-
-	// Unwrap returns the next error, if any.
-	Unwrap() Error
-}
-
-// Caller defines an interface to runtime caller results.
-type Caller interface {
-	// File returns the file in which the call occurred.
-	File() string
-
-	// Func returns the name of the function in which the call occurred.
-	Func() string
-
-	// Line returns the line number in the file in which the call occurred.
-	Line() int
-
-	// Pc returns the program counter.
-	Pc() uintptr
-
-	// Trace returns the call stack.
-	Trace() Trace
-}
-
-// Trace defines an error trace.
-type Trace []Caller
-```
