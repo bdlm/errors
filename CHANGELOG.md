@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
+# v2.1.1 - 2020-05-30
+#### Added
+* n/a
+
+#### Changed
+* Updated various docs
+
+#### Removed
+* n/a
+
 # v2.1.0 - 2020-05-30
 #### Added
 * Additional documentation
