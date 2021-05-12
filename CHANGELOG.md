@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
+# v2.1.2 - 2021-05-12
+#### Added
+* n/a
+
+#### Changed
+* Updated `func (e *E) Error() string` implementation to handle nil pointer references.
+
+#### Removed
+* n/a
+
 # v2.1.1 - 2020-05-30
 #### Added
 * n/a

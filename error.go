@@ -25,6 +25,9 @@ func (e *E) Caller() std_caller.Caller {
 
 // Error implements std_error.Error.
 func (e *E) Error() string {
+	if nil == e.err {
+		return ""
+	}
 	return e.err.Error()
 }
 
