@@ -14,6 +14,8 @@
 
 <a href="https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#mature"><img src="https://img.shields.io/badge/stability-mature-008000.svg" alt="Mature"></a> Code has proven satisfactory and is in wide production use, cleanup of the underlying code may cause some minor changes. Backwards-compatibility is guaranteed.
 
+#
+
 `errors` provides simple, concise, useful error handling and annotation. This package aims to implement the [Error Inspection](https://go.googlesource.com/proposal/+/master/design/go2draft-error-inspection.md) and [Error Values](https://go.googlesource.com/proposal/+/master/design/go2draft-error-values-overview.md) Go2 [draft designs](https://go.googlesource.com/proposal/+/master/design/go2draft.md).
 
 One of the biggest frustrations with Go error handling is the lack of forensic and meta information errors should provide. By default errors are just a string and possibly a type. They can't tell you where they occurred or the path through the call stack they followed. The error implementation in Go is robust enough to control program flow but it's not very efficient for troubleshooting or analysis.
