@@ -29,8 +29,10 @@ func (e *E) MarshalJSON() ([]byte, error) {
 			)
 		}
 		lastE = err.prev
-		if "" != nextE.Error() {
-			data["error"] = err.Error()
+		// frameMessage, not Error(): each entry is one frame, and Error() now carries the wrapped
+		// chain -- so using it here would repeat the whole tail in every entry of the array.
+		if "" != frameMessage(nextE) {
+			data["error"] = frameMessage(err)
 		}
 		jsonData = append(jsonData, data)
 	}
@@ -50,8 +52,8 @@ func (e *E) MarshalJSON() ([]byte, error) {
 				key+1,
 			)
 		}
-		if "" != lastE.Error() {
-			data["error"] = lastE.Error()
+		if "" != frameMessage(lastE) {
+			data["error"] = frameMessage(lastE)
 		}
 		jsonData = append(jsonData, data)
 	}

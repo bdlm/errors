@@ -12,23 +12,26 @@ import (
 // Format implements fmt.Formatter. https://golang.org/pkg/fmt/#hdr-Printing
 //
 // Verbs:
-//     %s      Returns the error string of the last error added
-//     %v      Alias for %s
+//
+//	%s      Returns the error string of the last error added
+//	%v      Alias for %s
 //
 // Flags:
-//      #      JSON formatted output, useful for logging
-//      -      Output caller details, useful for troubleshooting
-//      +      Output full error stack details, useful for debugging
-//      ' '    (space) Add whitespace formatting for readability, useful for development
+//
+//	#      JSON formatted output, useful for logging
+//	-      Output caller details, useful for troubleshooting
+//	+      Output full error stack details, useful for debugging
+//	' '    (space) Add whitespace formatting for readability, useful for development
 //
 // Examples:
-//      %s:    An error occurred
-//      %v:    An error occurred
-//      %-v:   #0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred
-//      %+v:   #0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred #1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors) - An error occurred
-//      %#v:   {"error":"An error occurred"}
-//      %#-v:  {"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}
-//      %#+v:  [{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}]
+//
+//	%s:    An error occurred
+//	%v:    An error occurred
+//	%-v:   #0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred
+//	%+v:   #0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors) - An error occurred #1 stack_test.go:39 (github.com/bdlm/error_test.TestErrors) - An error occurred
+//	%#v:   {"error":"An error occurred"}
+//	%#-v:  {"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}
+//	%#+v:  [{"caller":"#0 stack_test.go:40 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"},{"caller":"#0 stack_test.go:39 (github.com/bdlm/error_test.TestErrors)","error":"An error occurred"}]
 func (e *E) Format(state fmt.State, verb rune) {
 	str := bytes.NewBuffer([]byte{})
 
@@ -117,18 +120,18 @@ func format(key int, nextE error, sp string, jsonData []map[string]interface{}, 
 				)
 			}
 		}
-		if "" != nextE.Error() {
-			data["error"] = nextE.Error()
+		if "" != frameMessage(nextE) {
+			data["error"] = frameMessage(nextE)
 		}
 		jsonData = append(jsonData, data)
 
 	} else {
-		if "" != nextE.Error() {
-			fmt.Fprintf(str, "%s%s", sp, nextE.Error())
+		if "" != frameMessage(nextE) {
+			fmt.Fprintf(str, "%s%s", sp, frameMessage(nextE))
 		}
 
 		if flagDetail || flagTrace {
-			if "" != nextE.Error() {
+			if "" != frameMessage(nextE) {
 				fmt.Fprintf(str, " - ")
 			}
 			if ok && nil != err.Caller() {
@@ -153,4 +156,17 @@ func format(key int, nextE error, sp string, jsonData []map[string]interface{}, 
 		}
 	}
 	return sp, jsonData, str
+}
+
+// frameMessage is one link's own message. For an *E that is its frame message without the wrapped
+// chain -- Error() now includes the cause, and a trace that prints one line per frame would otherwise
+// repeat the whole tail on every line. Any other error type has only its own message to give.
+func frameMessage(err error) string {
+	if e, ok := err.(*E); ok {
+		return e.message()
+	}
+	if nil == err {
+		return ""
+	}
+	return err.Error()
 }
