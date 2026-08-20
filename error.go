@@ -79,7 +79,7 @@ func (e *E) Is(test error) bool {
 	}
 
 	// This method searches the CHAIN, not just this frame. That is this package's own documented
-	// behaviour (E.Is is part of std_error.Error and is used directly, not only as the errors.Is
+	// behavior (E.Is is part of std_error.Error and is used directly, not only as the errors.Is
 	// hook), and it is safe to keep: the standard library's errors.Is calls the hook as
 	// `ok && x.Is(target)`, so a false answer here does not end its walk -- it unwraps and asks the
 	// next link. The defect was never here. It was the PACKAGE-level Is in export.go, which returned

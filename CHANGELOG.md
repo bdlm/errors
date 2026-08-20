@@ -34,14 +34,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 #### Removed
 * n/a
 
-#### Note on one visible behaviour change
-Formatting an error obtained by unwrapping down to a *foreign* error is now that error's own
-formatting, because the caller now receives the real error rather than an `*E` box around it. Concretely:
-the last line of a `%+v` walk that ends in, say, a `fmt.Errorf` error no longer carries a `- #N n/a`
-caller marker, since that error has no caller frame to report. Traces of errors created by this package
-are unchanged. This is the only output difference in the test suite, and it is the visible edge of the
-`Unwrap` fix.
-
 # v2.1.2 - 2021-05-12
 #### Added
 * n/a
