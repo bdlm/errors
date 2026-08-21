@@ -29,11 +29,19 @@ Install
 
 	go get github.com/bdlm/errors/v2
 
-Quick Start
+# Quick Start
 
-All package methods work with any `error` type as well as `nil` values, and error instances
-implement the Unwrap, Is, Marshaler, and Formatter interfaces as well as the github.com/bdlm/std/errors
-interfaces.
+All package methods work with any `error` type as well as `nil` values -- including a nil *E
+receiver -- and error instances implement the Unwrap, Is, As, Marshaler, and Formatter interfaces as
+well as the github.com/bdlm/std/errors interfaces.
+
+Two guarantees are worth stating explicitly, because both are load-bearing and both are covered by
+tests: nothing in this package panics, for any combination of nil arguments and nil receivers; and
+Is and As agree with the standard library's Is and As on every chain shape, so it never matters
+which of the two a caller reaches for.
+
+New and Wrap take a MESSAGE, stored verbatim. Only Errorf, and Wrap when given arguments, treat it
+as a format string -- so a message containing a percent sign survives intact.
 
 Create an error:
 
@@ -43,20 +51,20 @@ Create an error using formatting verbs:
 
 	var MyError = errors.Errorf("My error #%d", 1)
 
-
 Wrap an error:
 
 	if nil != err {
 		return errors.Wrap(err, "the operation failed")
 	}
 
-Wrap an error with another error:
+Wrap an error with another error. Note this is WrapE: Wrap takes a message string, so passing an
+error to it does not compile.
 
 	err := try1()
 	if nil != err {
 		err2 := try2()
 		if nil != err2 {
-			return errors.Wrap(err, err2)
+			return errors.WrapE(err, err2)
 		}
 		return err
 	}
@@ -78,15 +86,9 @@ Test for a specific error type:
 		}
 	}
 
-Test to see if a specific error type exists anywhere in an error stack:
-
-	var MyError = errors.New("My error")
-	func main() {
-		err := doWork()
-		if errors.Has(err, MyError) {
-			...
-		}
-	}
+Is searches the whole chain, so there is no separate Has: the test above answers "does this
+error, or anything it wraps, match" -- at any depth, through fmt.Errorf("%w") wrappers, foreign
+error types and joined errors alike.
 
 Iterate through an error stack:
 

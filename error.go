@@ -1,7 +1,7 @@
 package errors
 
 import (
-	"reflect"
+	std_errors "errors"
 
 	std_caller "github.com/bdlm/std/v2/caller"
 	std_error "github.com/bdlm/std/v2/errors"
@@ -31,8 +31,17 @@ func (e *E) Caller() std_caller.Caller {
 // HTTP or gRPC response body. A caller was told "unable to resolve the signing key" with no hint of
 // the cause that was already recorded one link down.
 func (e *E) Error() string {
-	if nil == e.err {
+	if nil == e {
 		return ""
+	}
+	// A frame can legitimately carry no message of its own: Trace adds caller data without
+	// annotating, and WrapE accepts a nil annotation. Such a frame must be transparent rather
+	// than swallowing the chain or emitting a leading ": ".
+	if nil == e.err {
+		if nil == e.prev {
+			return ""
+		}
+		return e.prev.Error()
 	}
 	if nil == e.prev {
 		return e.err.Error()
@@ -54,26 +63,22 @@ func (e *E) message() string {
 
 // Is implements std_error.Error.
 func (e *E) Is(test error) bool {
-	if nil == test {
+	if nil == e || nil == test {
 		return false
 	}
 
-	isComparable := reflect.TypeOf(e).Comparable() && reflect.TypeOf(test).Comparable()
-	if isComparable && e == test {
+	if comparableErrors(e, test) && error(e) == test {
 		return true
 	}
-	isComparable = reflect.TypeOf(e.err).Comparable() && reflect.TypeOf(test).Comparable()
-	if isComparable && e.err == test {
+	if comparableErrors(e.err, test) && e.err == test {
 		return true
 	}
 
 	if testE, ok := test.(*E); ok {
-		isComparable = reflect.TypeOf(e).Comparable() && reflect.TypeOf(testE).Comparable()
-		if isComparable && e == testE {
+		if comparableErrors(e, testE) && error(e) == error(testE) {
 			return true
 		}
-		isComparable = reflect.TypeOf(e.err).Comparable() && reflect.TypeOf(testE.err).Comparable()
-		if isComparable && e.err == testE.err {
+		if comparableErrors(e.err, testE.err) && e.err == testE.err {
 			return true
 		}
 	}
@@ -93,6 +98,23 @@ func (e *E) Is(test error) bool {
 	}
 
 	return false
+}
+
+// As implements the standard library's As hook, interface{ As(interface{}) bool }, which
+// errors.As consults on each link before unwrapping.
+//
+// It exists because WrapE puts its annotation in e.err, which is NOT on the Unwrap chain -- Unwrap
+// yields e.prev. Is already special-cases e.err, so without this hook Is could find an error that
+// As could not, and a caller had no way to know which of the two would work. For an error package
+// the two must agree about what is in the chain.
+//
+// Delegating to the standard library rather than comparing types by hand also searches the
+// annotation's OWN chain, which is what errors.As would have done had the value been reachable.
+func (e *E) As(target interface{}) bool {
+	if nil == e || nil == e.err || nil == target {
+		return false
+	}
+	return std_errors.As(e.err, target)
 }
 
 // Unwrap implements std_error.Wrapper.

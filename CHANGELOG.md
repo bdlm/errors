@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
+# v2.1.5
+#### Fixed
+Eight defects, all found by a new contract test suite (`contract_test.go`) organised by obligation
+rather than by function. Coverage 95.9%, race-clean.
+
+* **Panics on nil.** `doc.go` promises every method works with nil values; four did not.
+  `(*E).Error`, `(*E).Is` and `(*E).MarshalJSON` dereferenced a nil receiver, and `(*E).Is` also
+  panicked whenever the frame carried no annotation of its own — `reflect.TypeOf(nil)` returns a
+  NIL `reflect.Type`, and calling `Comparable` on that panics rather than answering false. The
+  package-level `Is` had the same flaw. Both now share a `comparableErrors` helper.
+* **`New` and `Wrap` corrupted any message containing a percent sign.** Both passed the message
+  through `fmt.Errorf`, so `New("100% complete")` produced `"100%!c(MISSING)omplete"` and
+  `"disk usage at 95%"` produced `"...95%!(NOVERB)"`. A message is now stored verbatim; only
+  `Errorf`, and `Wrap` when given arguments, formats.
+* **`MarshalJSON` panicked on a foreign wrapper in the chain.** `list()` includes any error
+  implementing `Unwrap() error`, so a `fmt.Errorf("%w")` link reached an unguarded type assertion
+  and a nil field read. Marshalling an error must never panic — it runs while something is already
+  failing.
+* **`Trace` severed the chain.** It held the wrapped error in the annotation slot and left `prev`
+  nil, so `Unwrap` returned nothing and no sentinel below a trace was reachable. The error is now
+  on the chain, and a frame with no message of its own renders transparently.
+* **`Track` severed the chain for anything that was not already an `*E`.** `prev` came from a
+  synthetic box whose own `prev` was nil, so a `fmt.Errorf("%w")` wrapper, a joined error, or any
+  foreign wrapping type lost everything beneath it.
+* **`Is` could find what `As` could not.** `WrapE`'s annotation is not on the `Unwrap` chain, and
+  `Is` special-cased it while `As` did not — so which function you reached for changed the answer.
+  `(*E)` now implements the standard `As(interface{}) bool` hook, and the package-level `As`
+  searches the same slot.
+
+#### Documentation
+* `doc.go` documented `errors.Has`, which does not exist; `Is` searches the whole chain, which is
+  what that section described. It also showed `errors.Wrap(err, err2)`, which does not compile —
+  `Wrap` takes a message string, so wrapping with an error is `WrapE`.
+* Stated the two guarantees now covered by tests: nothing panics for any combination of nil
+  arguments and nil receivers, and `Is`/`As` agree with the standard library on every chain shape.
+
 # v2.1.4 - 2026-08-20
 #### Fixed
 * **`Is` and `As` now traverse multi-errors.** An error may wrap several causes — `errors.Join`, or

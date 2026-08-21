@@ -9,6 +9,9 @@ import (
 
 // MarshalJSON implements the json.Marshaller interface.
 func (e *E) MarshalJSON() ([]byte, error) {
+	if nil == e {
+		return []byte("null"), nil
+	}
 	var lastE, nextE error
 	var key int
 	jsonData := []map[string]interface{}{}
@@ -28,11 +31,19 @@ func (e *E) MarshalJSON() ([]byte, error) {
 				key,
 			)
 		}
-		lastE = err.prev
+		// Guarded on ok: list() includes ANY error implementing Unwrap() error, so a foreign
+		// wrapper in the chain -- fmt.Errorf("%w") being the common one -- lands here with err
+		// nil, and reading err.prev panicked. Marshalling an error must never panic; that is the
+		// path a logger takes while already handling a failure.
+		if ok {
+			lastE = err.prev
+		} else {
+			lastE = nil
+		}
 		// frameMessage, not Error(): each entry is one frame, and Error() now carries the wrapped
 		// chain -- so using it here would repeat the whole tail in every entry of the array.
 		if "" != frameMessage(nextE) {
-			data["error"] = frameMessage(err)
+			data["error"] = frameMessage(nextE)
 		}
 		jsonData = append(jsonData, data)
 	}
