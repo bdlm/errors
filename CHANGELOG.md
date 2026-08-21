@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
-# v2.1.3-rc1
+# v2.1.4 - 2026-08-20
+#### Fixed
+* **`Is` and `As` now traverse multi-errors.** An error may wrap several causes — `errors.Join`, or
+  `fmt.Errorf` with more than one `%w` — and those implement `Unwrap() []error`, which the
+  single-error `Unwrap` cannot express.
+* `Unwrap` still returns `nil` for a multi-error, as `std/errors.Unwrap` does — there is no single
+  previous error to return. This is now documented rather than implicit; callers walking a chain
+  themselves must branch on `Unwrap() []error`.
+
+# v2.1.3 - 2026-08-20
 #### Added
 * Interoperation tests against the standard library's `errors` package (`interop_test.go`).
 
