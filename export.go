@@ -37,6 +37,16 @@ func As(err, test error) error {
 		if e, ok := err.(interface{ As(error) error }); ok {
 			return e.As(test)
 		}
+		// Same multi-error branch as Is, for the same reason: Unwrap cannot express Unwrap() []error,
+		// so the walk would terminate at a join and miss every cause below it.
+		if multi, ok := err.(interface{ Unwrap() []error }); ok {
+			for _, branch := range multi.Unwrap() {
+				if found := As(branch, test); nil != found {
+					return found
+				}
+			}
+			return nil
+		}
 		err = Unwrap(err)
 	}
 
@@ -94,6 +104,22 @@ func Is(err, test error) bool {
 	// method, and every *E has one. So a sentinel two links down was unreachable.
 	if e, ok := err.(interface{ Is(error) bool }); ok && e.Is(test) {
 		return true
+	}
+
+	// An error may wrap SEVERAL causes -- errors.Join, or fmt.Errorf with more than one %w. Those
+	// implement Unwrap() []error, which the single-error Unwrap below cannot express: it returns nil
+	// for them, so without this branch the walk stops dead at the join and every cause underneath is
+	// unreachable. That made Is answer false for a joined sentinel even when the join was the error
+	// passed in, unwrapped -- golang-jwt joins its sentinels, so no jwt error was ever matchable.
+	//
+	// The whole tree is searched, not just the first branch, which is what the standard library does.
+	if multi, ok := err.(interface{ Unwrap() []error }); ok {
+		for _, branch := range multi.Unwrap() {
+			if Is(branch, test) {
+				return true
+			}
+		}
+		return false
 	}
 
 	if err = Unwrap(err); err == nil {
@@ -161,6 +187,10 @@ func Track(e error) *E {
 }
 
 // Unwrap returns the previous error.
+//
+// A multi-error -- one implementing Unwrap() []error -- has no single previous error, so this
+// returns nil for it, exactly as the standard library's errors.Unwrap does. Callers that walk a
+// chain must branch on Unwrap() []error themselves; Is and As do.
 func Unwrap(err error) error {
 	if e, ok := err.(interface{ Unwrap() error }); ok {
 		return e.Unwrap()
