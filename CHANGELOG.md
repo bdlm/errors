@@ -6,7 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
-# v2.1.5
+# v2.2.0 - 2026-08-21
+#### Changed
+* **`As` now matches the standard library's signature**, `As(err error, target interface{}) bool`,
+  replacing `As(err, test error) error`.
+
+  The old form required the target to satisfy `error`, which had two consequences. A caller could
+  not ask for a bare interface type at all — `&interface{ GRPCStatus() *Status }{}` is not an
+  `error` — which is the most common real question to ask of a chain. And for concrete types the
+  target's receiver kind leaked into the call: a type with a pointer receiver could not be asked
+  for, so callers picked value receivers to make the call compile rather than because the type
+  wanted one.
+
+  It also meant the package's own helper did not match the library it aims to implement, so code
+  moving between `errors.As` and `bdlm/errors.As` had to change shape as well as import path.
+
+  **Migration.** `if found := errors.As(err, target); nil != found { ... }` becomes
+  `if errors.As(err, &target) { ... }`, with `target` declared as the type or interface being
+  sought. Note the address-of: the standard library takes a pointer to the target.
+
+  As now **panics** on a target that is not a non-nil pointer to an error-implementing type or to
+  an interface, again matching the standard library. An unusable target cannot match anything, so
+  answering "not found" would hide a call-site mistake in precisely the paths that are hardest to
+  observe. A nil *error* is still an ordinary `false`.
+
+  The `As(interface{}) bool` hook on `*E` is unchanged; the old `As(error) error` hook shape is no
+  longer consulted.
+
 #### Fixed
 Eight defects, all found by a new contract test suite (`contract_test.go`) organised by obligation
 rather than by function. Coverage 95.9%, race-clean.

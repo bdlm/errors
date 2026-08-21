@@ -23,53 +23,66 @@ func comparableErrors(a, b error) bool {
 
 // As searches the error stack for an error that can be cast to the test
 // argument, which must be a pointer. If it succeeds it performs the
-// assignment and returns the result, otherwise it returns nil.
-func As(err, test error) error {
-	if nil == err || nil == test {
-		return nil
+// As finds the first error in err's chain that matches target, and if one is found, sets target to
+// that error value and returns true. Otherwise it returns false.
+//
+// The chain consists of err itself followed by the errors obtained by repeatedly unwrapping it. An
+// error matches target if the error's concrete type is assignable to the value pointed to by
+// target, or if the error has a method As(interface{}) bool such that As(target) returns true.
+//
+// As panics if target is not a non-nil pointer to either a type that implements error, or to any
+// interface type. That is deliberate and matches the standard library: an unusable target is a
+// programming error at the call site, not a runtime condition to be reported, and returning false
+// for it would silently hide the mistake in exactly the code paths that are hardest to observe.
+//
+// SIGNATURE CHANGE. This previously read As(err, test error) error, returning the matched error or
+// nil. That forced the target to satisfy the error interface, so a caller could not ask for a bare
+// interface type and had to choose between a value and a pointer receiver purely to make the call
+// compile. It also meant this package's central helper did not match the standard library it aims
+// to implement, so code moving between the two had to change shape.
+func As(err error, target interface{}) bool {
+	if nil == err {
+		return false
 	}
-
-	val := reflect.ValueOf(test)
+	if nil == target {
+		panic("errors: target cannot be nil")
+	}
+	val := reflect.ValueOf(target)
 	typ := val.Type()
-	if typ.Kind() != reflect.Ptr || val.IsNil() {
-		return nil
+	if reflect.Ptr != typ.Kind() || val.IsNil() {
+		panic("errors: target must be a non-nil pointer")
+	}
+	targetType := typ.Elem()
+	if reflect.Interface != targetType.Kind() && !targetType.Implements(errorType) {
+		panic("errors: *target must be interface or implement error")
 	}
 
-	if e := typ.Elem(); e.Kind() != reflect.Interface && !e.Implements(errorType) {
-		return nil
-	}
-
-	testType := typ.Elem()
-	for err != nil {
-		if reflect.TypeOf(err).AssignableTo(testType) {
+	for {
+		if reflect.TypeOf(err).AssignableTo(targetType) {
 			val.Elem().Set(reflect.ValueOf(err))
-			return err
+			return true
 		}
-		if e, ok := err.(interface{ As(error) error }); ok {
-			return e.As(test)
+		// `ok && x.As(target)`, not a bare return: a hook answering false means THIS link does not
+		// match, not that the search is over. (*E) implements this hook, and it is what reaches the
+		// annotation slot -- which is not on the Unwrap chain -- so Is and As agree about the chain.
+		if x, ok := err.(interface{ As(interface{}) bool }); ok && x.As(target) {
+			return true
 		}
-		// An *E's annotation (e.err) is not on the Unwrap chain -- Unwrap yields e.prev -- so it
-		// has to be searched explicitly, exactly as Is does. Without this the package's own As
-		// disagreed with its Is about what the chain contains.
-		if e, ok := err.(*E); ok && nil != e.err {
-			if found := As(e.err, test); nil != found {
-				return found
-			}
-		}
-		// Same multi-error branch as Is, for the same reason: Unwrap cannot express Unwrap() []error,
-		// so the walk would terminate at a join and miss every cause below it.
+		// An error may wrap SEVERAL causes -- errors.Join, or fmt.Errorf with more than one %w --
+		// and Unwrap() []error cannot be expressed by the single-error Unwrap below, so without this
+		// branch the walk stops at the join and every cause underneath is unreachable.
 		if multi, ok := err.(interface{ Unwrap() []error }); ok {
 			for _, branch := range multi.Unwrap() {
-				if found := As(branch, test); nil != found {
-					return found
+				if nil != branch && As(branch, target) {
+					return true
 				}
 			}
-			return nil
+			return false
 		}
-		err = Unwrap(err)
+		if err = Unwrap(err); nil == err {
+			return false
+		}
 	}
-
-	return nil
 }
 
 // Caller returns the Caller associated with an error, if any.

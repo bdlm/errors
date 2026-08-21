@@ -86,6 +86,18 @@ Test for a specific error type:
 		}
 	}
 
+Find a specific error type anywhere in a chain:
+
+	var target *MyErrorType
+	if errors.As(err, &target) {
+		...
+	}
+
+As takes the same arguments as the standard library's, target being a pointer to the type or
+interface being looked for, and returns whether one was found. It panics if target is not a non-nil
+pointer to either a type implementing error or to any interface type -- an unusable target is a
+mistake at the call site, not a condition to report.
+
 Is searches the whole chain, so there is no separate Has: the test above answers "does this
 error, or anything it wraps, match" -- at any depth, through fmt.Errorf("%w") wrappers, foreign
 error types and joined errors alike.

@@ -34,13 +34,9 @@ type custom struct{ msg string }
 
 func (c *custom) Error() string { return c.msg }
 
-// valueErr uses a VALUE receiver, so *valueErr is a pointer whose element implements error --
-// the shape bdlm's As(err, test error) requires of its target, and one the standard library's
-// As(err, any) accepts too. It exists so the two can be compared on identical input.
-//
-// Worth noting on its own: bdlm's As signature differs from the standard library's
-// (As(err, test error) error vs As(err error, target any) bool), which is why a target type has to
-// be chosen with both in mind.
+// valueErr uses a VALUE receiver, and *custom below uses a pointer receiver. Both shapes are
+// exercised because As must handle either, and because a target's receiver kind used to constrain
+// whether it could be asked for at all.
 type valueErr struct{ msg string }
 
 func (v valueErr) Error() string { return v.msg }
@@ -59,33 +55,33 @@ func TestNilSafety(t *testing.T) {
 	var nilE *errors.E
 
 	cases := map[string]func(){
-		"New empty":            func() { _ = errors.New("") },
-		"Errorf empty":         func() { _ = errors.Errorf("") },
-		"Wrap nil":             func() { _ = errors.Wrap(nil, "msg") },
-		"Wrap nil empty msg":   func() { _ = errors.Wrap(nil, "") },
-		"WrapE nil nil":        func() { _ = errors.WrapE(nil, nil) },
-		"WrapE err nil":        func() { _ = errors.WrapE(sentinel, nil) },
-		"WrapE nil err":        func() { _ = errors.WrapE(nil, sentinel) },
-		"Unwrap nil":           func() { _ = errors.Unwrap(nil) },
-		"Is nil nil":           func() { _ = errors.Is(nil, nil) },
-		"Is nil target":        func() { _ = errors.Is(sentinel, nil) },
-		"Is nil err":           func() { _ = errors.Is(nil, sentinel) },
-		"As nil nil":           func() { _ = errors.As(nil, nil) },
-		"As nil err":           func() { _ = errors.As(nil, sentinel) },
-		"Caller nil":           func() { _ = errors.Caller(nil) },
-		"Trace nil":            func() { _ = errors.Trace(nil) },
-		"Track nil":            func() { _ = errors.Track(nil) },
-		"nil E Error":          func() { _ = nilE.Error() },
-		"nil E Unwrap":         func() { _ = nilE.Unwrap() },
-		"nil E Caller":         func() { _ = nilE.Caller() },
-		"nil E Is":             func() { _ = nilE.Is(sentinel) },
-		"nil E MarshalJSON":    func() { _, _ = nilE.MarshalJSON() },
-		"nil E format %v":      func() { _ = fmt.Sprintf("%v", nilE) },
-		"nil E format %+v":     func() { _ = fmt.Sprintf("%+v", nilE) },
-		"nil E format %#v":     func() { _ = fmt.Sprintf("%#v", nilE) },
-		"WrapE nil err Error":  func() { _ = errors.WrapE(sentinel, nil).Error() },
-		"WrapE nil err Is":     func() { _ = errors.WrapE(sentinel, nil).Is(sentinel) },
-		"WrapE nil err format": func() { _ = fmt.Sprintf("%+v", errors.WrapE(sentinel, nil)) },
+		"New empty":              func() { _ = errors.New("") },
+		"Errorf empty":           func() { _ = errors.Errorf("") },
+		"Wrap nil":               func() { _ = errors.Wrap(nil, "msg") },
+		"Wrap nil empty msg":     func() { _ = errors.Wrap(nil, "") },
+		"WrapE nil nil":          func() { _ = errors.WrapE(nil, nil) },
+		"WrapE err nil":          func() { _ = errors.WrapE(sentinel, nil) },
+		"WrapE nil err":          func() { _ = errors.WrapE(nil, sentinel) },
+		"Unwrap nil":             func() { _ = errors.Unwrap(nil) },
+		"Is nil nil":             func() { _ = errors.Is(nil, nil) },
+		"Is nil target":          func() { _ = errors.Is(sentinel, nil) },
+		"Is nil err":             func() { _ = errors.Is(nil, sentinel) },
+		"As nil err, nil target": func() { _ = errors.As(nil, nil) },
+		"As nil err, bad target": func() { _ = errors.As(nil, sentinel) },
+		"Caller nil":             func() { _ = errors.Caller(nil) },
+		"Trace nil":              func() { _ = errors.Trace(nil) },
+		"Track nil":              func() { _ = errors.Track(nil) },
+		"nil E Error":            func() { _ = nilE.Error() },
+		"nil E Unwrap":           func() { _ = nilE.Unwrap() },
+		"nil E Caller":           func() { _ = nilE.Caller() },
+		"nil E Is":               func() { _ = nilE.Is(sentinel) },
+		"nil E MarshalJSON":      func() { _, _ = nilE.MarshalJSON() },
+		"nil E format %v":        func() { _ = fmt.Sprintf("%v", nilE) },
+		"nil E format %+v":       func() { _ = fmt.Sprintf("%+v", nilE) },
+		"nil E format %#v":       func() { _ = fmt.Sprintf("%#v", nilE) },
+		"WrapE nil err Error":    func() { _ = errors.WrapE(sentinel, nil).Error() },
+		"WrapE nil err Is":       func() { _ = errors.WrapE(sentinel, nil).Is(sentinel) },
+		"WrapE nil err format":   func() { _ = fmt.Sprintf("%+v", errors.WrapE(sentinel, nil)) },
 	}
 	for name, call := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -267,19 +263,56 @@ func TestAsTargets(t *testing.T) {
 	}
 }
 
-// TestAsRejectsInvalidTargets: the package's own As must not panic on a target the standard
-// library would reject outright.
-func TestAsRejectsInvalidTargets(t *testing.T) {
-	defer func() {
-		if r := recover(); nil != r {
-			t.Fatalf("panicked on an invalid target: %v", r)
-		}
-	}()
-	if nil != errors.As(errors.New("x"), nil) {
-		t.Error("As with a nil target should find nothing")
+// TestAsPanicsOnUnusableTargets matches the standard library exactly, and deliberately so: an
+// unusable target is a mistake at the call site, and returning false for it would hide the mistake
+// in the code paths that are hardest to observe. Silently answering "not found" for a target that
+// could never match anything is worse than crashing during development.
+func TestAsPanicsOnUnusableTargets(t *testing.T) {
+	notAPointer := 42
+	cases := map[string]interface{}{
+		"nil target":                  nil,
+		"non-pointer":                 sentinel,
+		"pointer to a non-error type": &notAPointer,
+		"typed nil pointer":           (*custom)(nil),
 	}
-	if nil != errors.As(errors.New("x"), sentinel) {
-		t.Error("As with a non-pointer target should find nothing")
+	for name, target := range cases {
+		t.Run(name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); nil == r {
+					t.Error("did not panic on an unusable target")
+				}
+			}()
+			errors.As(errors.New("x"), target)
+		})
+	}
+}
+
+// TestAsWithANilErrorIsFalseNotAPanic: a nil error is a normal runtime condition, unlike a bad
+// target, so it must be answered rather than punished. The standard library draws the same line.
+func TestAsWithANilErrorIsFalseNotAPanic(t *testing.T) {
+	var target *custom
+	if errors.As(nil, &target) {
+		t.Error("As(nil, ...) reported a match")
+	}
+}
+
+// TestAsFindsInterfaceTargets: the old error-typed signature could not express this at all, since
+// an interface pointer does not itself satisfy error. It is the common real case -- asking whether
+// anything in the chain implements some behaviour.
+func TestAsFindsInterfaceTargets(t *testing.T) {
+	chain := errors.Wrap(errors.Wrap(&falseIs{inner: sentinel}, "a"), "b")
+
+	var unwrapper interface{ Unwrap() error }
+	if !errors.As(chain, &unwrapper) {
+		t.Fatal("As could not find an error implementing Unwrap() error")
+	}
+	if nil == unwrapper {
+		t.Error("As reported a match but left the target nil")
+	}
+
+	var absent interface{ NotImplementedByAnything() }
+	if errors.As(chain, &absent) {
+		t.Error("As matched an interface nothing implements")
 	}
 }
 
@@ -426,11 +459,19 @@ func TestIsAndAsAgreeWithStdlibAcrossShapes(t *testing.T) {
 				t.Errorf("Is disagreement: std=%v package=%v", std, pkg)
 			}
 			// The same chain, asked for a concrete type instead of a sentinel.
-			var viaStd valueErr
+			// Identical call shape for both, now that the signatures match -- which is itself
+			// the point of the change: the same target works with either function.
+			var viaStd, viaPkg valueErr
 			stdAs := std_errors.As(err, &viaStd)
-			pkgAs := nil != errors.As(err, &valueErr{})
+			pkgAs := errors.As(err, &viaPkg)
 			if stdAs != pkgAs {
 				t.Errorf("As disagreement on valueErr: std=%v package=%v", stdAs, pkgAs)
+			}
+			// A POINTER-receiver type, which the old error-typed target could not express at all.
+			var ptrStd, ptrPkg *custom
+			if std_errors.As(err, &ptrStd) != errors.As(err, &ptrPkg) {
+				t.Errorf("As disagreement on *custom: std=%v package=%v",
+					std_errors.As(err, &ptrStd), errors.As(err, &ptrPkg))
 			}
 		})
 	}
