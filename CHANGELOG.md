@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
+# v2.1.3-rc1
+#### Added
+* Interoperation tests against the standard library's `errors` package (`interop_test.go`).
+
+#### Changed
+* **`func (e *E) Unwrap() error` now returns the wrapped error itself.** It previously re-boxed a
+  wrapped error that did not implement `std/errors.Error` as `&E{err: prev}`. That box carried no
+  `prev`, so the chain ended there and the original error value was never handed to the caller — its
+  own `Unwrap`, `Is` and `As` were never consulted. The consequence was that `errors.As` could only
+  ever match `*E`, since no other concrete type was ever yielded, so anything built on `errors.As`
+  could not see through a wrap. gRPC is the sharpest example: `status.FromError` is `errors.As` for an
+  `interface{ GRPCStatus() *Status }`, so a wrapped status error was reported as `codes.Unknown` — an
+  HTTP 500 — including for failures that were plainly the caller's fault, such as an unacceptable auth
+  token.
+* **`func Is(err, test error) bool` no longer ends the walk early.** It returned the first link's `Is`
+  answer directly; every `*E` has an `Is` method, so a `false` there ended the search and a sentinel
+  further down was unreachable. A negative answer from one link now continues to the next.
+  `func (e *E) Is(error) bool` is unchanged and still searches the chain — the standard library calls
+  that hook as `ok && x.Is(target)`, so its answer never terminated `errors.Is`'s own walk.
+* **`func (e *E) Error() string` includes the wrapped message**, `"outer: inner"`, as
+  `fmt.Errorf("%w")` produces. Returning only the frame's own message discarded everything beneath it
+  wherever an error is rendered through `Error()` rather than a `%+v` verb — which is most of the
+  places that reach a user, including an HTTP or gRPC response body. The trace and JSON formats print
+  one line per frame and now use each frame's own message, so their output is unchanged.
+
+#### Removed
+* n/a
+
 # v2.1.2 - 2021-05-12
 #### Added
 * n/a

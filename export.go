@@ -89,8 +89,11 @@ func Is(err, test error) bool {
 		}
 	}
 
-	if e, ok := err.(interface{ Is(error) bool }); ok {
-		return e.Is(test)
+	// A custom Is answering "no" means THIS error does not match -- not that the search is over. The
+	// previous code returned that answer directly, which ended the walk at the first link with an Is
+	// method, and every *E has one. So a sentinel two links down was unreachable.
+	if e, ok := err.(interface{ Is(error) bool }); ok && e.Is(test) {
+		return true
 	}
 
 	if err = Unwrap(err); err == nil {
