@@ -1,6 +1,7 @@
 package errors
 
 import (
+	std_errors "errors"
 	"fmt"
 	"reflect"
 
@@ -10,47 +11,78 @@ import (
 
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
+// comparableErrors reports whether == is defined for both operands.
+//
+// reflect.TypeOf(nil) returns a NIL reflect.Type, and calling Comparable on that panics rather than
+// answering false. A nil operand is ordinary here -- a frame can carry no annotation of its own --
+// so every comparability check has to screen for it first.
+func comparableErrors(a, b error) bool {
+	ta, tb := reflect.TypeOf(a), reflect.TypeOf(b)
+	return nil != ta && nil != tb && ta.Comparable() && tb.Comparable()
+}
+
 // As searches the error stack for an error that can be cast to the test
 // argument, which must be a pointer. If it succeeds it performs the
-// assignment and returns the result, otherwise it returns nil.
-func As(err, test error) error {
-	if nil == err || nil == test {
-		return nil
+// As finds the first error in err's chain that matches target, and if one is found, sets target to
+// that error value and returns true. Otherwise it returns false.
+//
+// The chain consists of err itself followed by the errors obtained by repeatedly unwrapping it. An
+// error matches target if the error's concrete type is assignable to the value pointed to by
+// target, or if the error has a method As(interface{}) bool such that As(target) returns true.
+//
+// As panics if target is not a non-nil pointer to either a type that implements error, or to any
+// interface type. That is deliberate and matches the standard library: an unusable target is a
+// programming error at the call site, not a runtime condition to be reported, and returning false
+// for it would silently hide the mistake in exactly the code paths that are hardest to observe.
+//
+// SIGNATURE CHANGE. This previously read As(err, test error) error, returning the matched error or
+// nil. That forced the target to satisfy the error interface, so a caller could not ask for a bare
+// interface type and had to choose between a value and a pointer receiver purely to make the call
+// compile. It also meant this package's central helper did not match the standard library it aims
+// to implement, so code moving between the two had to change shape.
+func As(err error, target interface{}) bool {
+	if nil == err {
+		return false
 	}
-
-	val := reflect.ValueOf(test)
+	if nil == target {
+		panic("errors: target cannot be nil")
+	}
+	val := reflect.ValueOf(target)
 	typ := val.Type()
-	if typ.Kind() != reflect.Ptr || val.IsNil() {
-		return nil
+	if reflect.Ptr != typ.Kind() || val.IsNil() {
+		panic("errors: target must be a non-nil pointer")
+	}
+	targetType := typ.Elem()
+	if reflect.Interface != targetType.Kind() && !targetType.Implements(errorType) {
+		panic("errors: *target must be interface or implement error")
 	}
 
-	if e := typ.Elem(); e.Kind() != reflect.Interface && !e.Implements(errorType) {
-		return nil
-	}
-
-	testType := typ.Elem()
-	for err != nil {
-		if reflect.TypeOf(err).AssignableTo(testType) {
+	for {
+		if reflect.TypeOf(err).AssignableTo(targetType) {
 			val.Elem().Set(reflect.ValueOf(err))
-			return err
+			return true
 		}
-		if e, ok := err.(interface{ As(error) error }); ok {
-			return e.As(test)
+		// `ok && x.As(target)`, not a bare return: a hook answering false means THIS link does not
+		// match, not that the search is over. (*E) implements this hook, and it is what reaches the
+		// annotation slot -- which is not on the Unwrap chain -- so Is and As agree about the chain.
+		if x, ok := err.(interface{ As(interface{}) bool }); ok && x.As(target) {
+			return true
 		}
-		// Same multi-error branch as Is, for the same reason: Unwrap cannot express Unwrap() []error,
-		// so the walk would terminate at a join and miss every cause below it.
+		// An error may wrap SEVERAL causes -- errors.Join, or fmt.Errorf with more than one %w --
+		// and Unwrap() []error cannot be expressed by the single-error Unwrap below, so without this
+		// branch the walk stops at the join and every cause underneath is unreachable.
 		if multi, ok := err.(interface{ Unwrap() []error }); ok {
 			for _, branch := range multi.Unwrap() {
-				if found := As(branch, test); nil != found {
-					return found
+				if nil != branch && As(branch, target) {
+					return true
 				}
 			}
-			return nil
+			return false
 		}
-		err = Unwrap(err)
+		if err = Unwrap(err); nil == err {
+			return false
+		}
 	}
-
-	return nil
 }
 
 // Caller returns the Caller associated with an error, if any.
@@ -87,14 +119,16 @@ func Is(err, test error) bool {
 		return false
 	}
 
-	isComparable := reflect.TypeOf(err).Comparable() && reflect.TypeOf(test).Comparable()
-	if isComparable && err == test {
+	if comparableErrors(err, test) && err == test {
 		return true
 	}
 
+	// The annotation slot, which is not on the Unwrap chain -- see (*E).As. Note e.err can be nil
+	// (Trace annotates nothing), which is why this goes through comparableErrors rather than
+	// calling reflect.TypeOf(...).Comparable() directly: reflect.TypeOf(nil) is a NIL Type and
+	// calling any method on it panics.
 	if e, ok := err.(*E); ok {
-		isComparable := reflect.TypeOf(e.err).Comparable() && reflect.TypeOf(test).Comparable()
-		if isComparable && e.err == test {
+		if comparableErrors(e.err, test) && e.err == test {
 			return true
 		}
 	}
@@ -130,10 +164,15 @@ func Is(err, test error) bool {
 }
 
 // New returns an error that contains caller data.
+//
+// msg is a MESSAGE, not a format string: it is stored verbatim. Passing it through fmt.Errorf
+// corrupted any message containing a percent sign -- New("100% complete") produced
+// "100%!c(MISSING)omplete", and "disk usage at 95%" produced "...95%!(NOVERB)". Callers that want
+// formatting have Errorf.
 func New(msg string) *E {
 	return &E{
 		caller: NewCaller(),
-		err:    fmt.Errorf(msg),
+		err:    std_errors.New(msg),
 	}
 }
 
@@ -150,38 +189,43 @@ func Trace(e error) *E {
 		clr.trace = append(clr.trace, stdClr.Caller().Trace()...)
 	}
 
+	// prev, NOT err. Trace adds a caller line; it does not annotate. Holding the wrapped error in
+	// the message slot left prev nil, so Unwrap returned nothing and the whole chain below the
+	// trace became unreachable -- errors.Is could no longer find a sentinel through it. Error()
+	// treats a frame with no message of its own as transparent, so the rendered text is unchanged.
 	return &E{
 		caller: clr,
-		err:    e,
+		prev:   e,
 	}
 }
 
 // Track updates the error stack with additional caller data.
+//
+// The tracked error stays ON THE UNWRAP CHAIN. It was previously held in the annotation slot with
+// prev taken from a synthetic box, so for anything other than an *E -- a fmt.Errorf("%w") wrapper, a
+// joined error, any foreign type that wraps -- prev was nil and everything the error itself wrapped
+// became unreachable: errors.Is could no longer find a sentinel through it. A decorator that adds
+// caller data must not cost the caller their chain.
+//
+// The inserted frame's message is the marker alone rather than the error's text repeated, since the
+// error it wraps renders immediately after it.
 func Track(e error) *E {
-	var stdE *E
 	if nil == e {
 		return nil
 	}
 
-	stdE, ok := e.(*E)
-	if !ok {
-		stdE = &E{
-			err: e,
-		}
-		if clr, ok := e.(std_error.Caller); ok {
-			stdE.caller = clr.Caller()
-		} else {
-			stdE.caller = NewCaller()
-		}
+	// Adopt the error's own caller when it has one, so tracking does not overwrite the origin.
+	clr := NewCaller()
+	if stdClr, ok := e.(std_error.Caller); ok && nil != stdClr.Caller() {
+		clr = stdClr.Caller()
 	}
 
 	return &E{
-		caller: stdE.Caller(),
-		err:    e,
+		caller: clr,
 		prev: &E{
 			caller: NewCaller(),
-			err:    fmt.Errorf("%s (tracked)", e),
-			prev:   stdE.Unwrap(),
+			err:    std_errors.New("(tracked)"),
+			prev:   e,
 		},
 	}
 }
@@ -199,7 +243,14 @@ func Unwrap(err error) error {
 }
 
 // Wrap returns a new error that wraps the provided error.
+//
+// msg is treated as a format string ONLY when data is supplied, matching New/Errorf: with no
+// arguments there is nothing to interpolate, and interpreting it anyway corrupts any message
+// containing a percent sign.
 func Wrap(e error, msg string, data ...interface{}) *E {
+	if 0 == len(data) {
+		return WrapE(e, std_errors.New(msg))
+	}
 	return WrapE(e, fmt.Errorf(msg, data...))
 }
 

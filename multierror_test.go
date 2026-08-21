@@ -14,7 +14,7 @@ var (
 )
 
 // customErr uses a VALUE receiver so that *customErr is a pointer whose element type implements
-// error, which is the shape bdlm's As(err, test error) requires of its target.
+// error. Both receiver kinds must work as an As target.
 type customErr struct{ msg string }
 
 func (c customErr) Error() string { return c.msg }
@@ -78,9 +78,9 @@ func TestAsTraversesMultiErrors(t *testing.T) {
 			t.Fatalf("%s: premise broken, std_errors.As cannot find it either", name)
 		}
 
-		found := &customErr{}
-		if got := errors.As(err, found); nil == got || cause.msg != found.msg {
-			t.Errorf("%s: As did not reach the concrete cause (got %v, found %q)", name, got, found.msg)
+		var found customErr
+		if !errors.As(err, &found) || cause.msg != found.msg {
+			t.Errorf("%s: As did not reach the concrete cause (found %q)", name, found.msg)
 		}
 	}
 }
