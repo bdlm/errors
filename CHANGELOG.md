@@ -6,23 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
-# v2.2.1
+# v2.2.1 - 2026-08-24
 #### Fixed
 * **`%v` discarded the cause chain.** `Error()` and `%s` returned the full message, while `%v`
   printed only the outermost frame — so a wrapped cause was recorded everywhere except where anyone
   looks for it. `%v` is the verb `fmt.Println(err)` uses and the one most loggers call.
 
-  `fmt` normally gives `%v` on an error the value of `Error()`, but a `Formatter` overrides that,
-  and this package's `Format` took a separate path for `'v'` that rendered one frame. Both the
-  standard library and `pkg/errors` treat `%v` as the whole chain; this package was the outlier.
-
-  `%v`, `%s`, `%-v` and `%#v` now all carry the full message. `%+v` and `%#+v` are unchanged and
-  still print one line per frame with that frame's own message — that separation is the point of
-  the trace forms, and printing the chain on every line would repeat the tail.
-
-  **This changes rendered output**, so anything asserting on log text will see longer messages.
-  Eight examples encoded the old behaviour and are updated; the four trace examples were unaffected,
-  which is the check that the change is scoped correctly.
 
 # v2.2.0 - 2026-08-21
 #### Changed
