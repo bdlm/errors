@@ -120,18 +120,19 @@ func format(key int, nextE error, sp string, jsonData []map[string]interface{}, 
 				)
 			}
 		}
-		if "" != frameMessage(nextE) {
-			data["error"] = frameMessage(nextE)
+		if message := messageFor(nextE, flagTrace); "" != message {
+			data["error"] = message
 		}
 		jsonData = append(jsonData, data)
 
 	} else {
-		if "" != frameMessage(nextE) {
-			fmt.Fprintf(str, "%s%s", sp, frameMessage(nextE))
+		message := messageFor(nextE, flagTrace)
+		if "" != message {
+			fmt.Fprintf(str, "%s%s", sp, message)
 		}
 
 		if flagDetail || flagTrace {
-			if "" != frameMessage(nextE) {
+			if "" != message {
 				fmt.Fprintf(str, " - ")
 			}
 			if ok && nil != err.Caller() {
@@ -156,6 +157,26 @@ func format(key int, nextE error, sp string, jsonData []map[string]interface{}, 
 		}
 	}
 	return sp, jsonData, str
+}
+
+// messageFor chooses between the whole chain and this frame alone.
+//
+// The trace verbs (%+v) print one line per frame, so each line must carry only its own message or
+// every line repeats the tail below it. Every OTHER form renders a single string, and that string
+// has to be the full message -- the same thing Error() and %s produce.
+//
+// %v used to take the per-frame path and stop at the first frame, so it printed only the outermost
+// message and silently discarded the cause. It is the most-used verb for an error in Go and the one
+// most loggers call, so the effect was that a wrapped cause was recorded everywhere except where
+// anyone looked: err.Error() had it, %s had it, %v did not.
+func messageFor(err error, perFrame bool) string {
+	if perFrame {
+		return frameMessage(err)
+	}
+	if nil == err {
+		return ""
+	}
+	return err.Error()
 }
 
 // frameMessage is one link's own message. For an *E that is its frame message without the wrapped

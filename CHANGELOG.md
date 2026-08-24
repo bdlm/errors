@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Minor**: feature additions, removal of deprecated features
 - **Patch**: bug fixes, backward compatible model and function changes, etc.
 
+# v2.2.1 - 2026-08-24
+#### Fixed
+* **`%v` discarded the cause chain.** `Error()` and `%s` returned the full message, while `%v`
+  printed only the outermost frame — so a wrapped cause was recorded everywhere except where anyone
+  looks for it. `%v` is the verb `fmt.Println(err)` uses and the one most loggers call.
+
+
 # v2.2.0 - 2026-08-21
 #### Changed
 * **`As` now matches the standard library's signature**, `As(err error, target interface{}) bool`,

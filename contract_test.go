@@ -348,7 +348,60 @@ func TestFormatVerbs(t *testing.T) {
 		})
 	}
 	if plain, trace := fmt.Sprintf("%v", err), fmt.Sprintf("%+v", err); len(trace) <= len(plain) {
-		t.Errorf("%%+v (%d bytes) should carry more than %%v (%d bytes)", len(trace), len(plain))
+		t.Errorf("the trace verb (%d bytes) should carry more than the plain one (%d bytes)", len(trace), len(plain))
+	}
+}
+
+// TestPlainVerbsEqualError is the assertion that matters most and the one this suite was missing.
+//
+// %v and %s on an error must both produce Error(). fmt gives that for free, but a Formatter
+// overrides it -- and this package's Formatter took a separate path for 'v' that printed only the
+// outermost frame, so %v silently discarded the cause while %s and Error() kept it. Every check
+// this suite already had passed anyway: the output was non-empty, contained no bad verb, and was
+// shorter than %+v. Asserting SHAPE rather than equivalence is what let it through.
+//
+// %v is also the verb loggers use, so the effect was a wrapped cause being recorded everywhere
+// except where anyone would look for it.
+func TestPlainVerbsEqualError(t *testing.T) {
+	shapes := map[string]error{
+		"single frame":        errors.New("only"),
+		"two frames":          errors.Wrap(errors.New("inner"), "outer"),
+		"three frames":        errors.Wrap(errors.Wrap(errors.New("root"), "middle"), "outer"),
+		"over a sentinel":     errors.Wrap(sentinel, "outer"),
+		"over a foreign type": errors.Wrap(&custom{msg: "foreign"}, "outer"),
+		"over fmt wrapping":   errors.Wrap(fmt.Errorf("f: %w", sentinel), "outer"),
+		"annotation only":     errors.WrapE(sentinel, nil),
+		"traced":              errors.Trace(errors.Wrap(sentinel, "inner")),
+	}
+	for name, err := range shapes {
+		t.Run(name, func(t *testing.T) {
+			want := err.Error()
+			if got := fmt.Sprintf("%v", err); want != got {
+				t.Errorf("the plain verb = %q, want Error() = %q", got, want)
+			}
+			if got := fmt.Sprintf("%s", err); want != got {
+				t.Errorf("the string verb = %q, want Error() = %q", got, want)
+			}
+		})
+	}
+}
+
+// TestTraceVerbKeepsOneMessagePerFrame is the other half: the trace form prints a line per frame,
+// so each line must carry only its OWN message. If it used the full chain the tail would repeat on
+// every line, which is what makes the two forms different rather than one being a longer version of
+// the other.
+func TestTraceVerbKeepsOneMessagePerFrame(t *testing.T) {
+	err := errors.Wrap(errors.Wrap(errors.New("root"), "middle"), "outer")
+	trace := fmt.Sprintf("%+v", err)
+
+	if strings.Count(trace, "root") != 1 {
+		t.Errorf("the root message appears %d times; each frame should state its own message once:\n%s",
+			strings.Count(trace, "root"), trace)
+	}
+	for _, frame := range []string{"outer", "middle", "root"} {
+		if !strings.Contains(trace, frame) {
+			t.Errorf("the trace is missing frame %q", frame)
+		}
 	}
 }
 
